@@ -19,8 +19,9 @@ sdl_main.o: sdl_main.c sdl_parser.h sdl_lexer.h
 
 
 
-sdl_lexer.c sdl_lexer.h: sdl_lexer.l
-	flex -d -i -L --header-file=sdl_lexer.h --outfile=sdl_lexer.c sdl_lexer.l
+sdl_lexer.c sdl_lexer.h: sdl_lexer.l sdl_parser.h
+# -L --noline
+	flex -d -i --header-file=sdl_lexer.h --outfile=sdl_lexer.c sdl_lexer.l
 
 sdl_parser.c sdl_parser.h: sdl_parser.y
-	bison -d -t --output-file=sdl_parser.c --defines=sdl_parser.h --warnings=all --feature=all sdl_parser.y
+	bison -d -t --report=all --output-file=sdl_parser.c --defines=sdl_parser.h --warnings=all --feature=all sdl_parser.y

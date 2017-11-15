@@ -21,9 +21,7 @@
 
 #define	sdl_str2asc	__util$str2asc
 
-
 #define	$BITOPT(n)	(1 << (n))
-
 
 #define	SDL_K_TYPE_BYTE	$BITOPT(0)
 #define	SDL_K_TYPE_WORD	$BITOPT(1)
@@ -42,10 +40,10 @@
 #define	SDL_K_TYPE_ASCIC $BITOPT(11)
 #define	SDL_K_TYPE_SDESC $BITOPT(12)
 
-#define	SDL_K_TYPE_MAC	$BITOPT(13)
-#define	SDL_K_TYPE_IP	$BITOPT(14)
-#define	SDL_K_TYPE_IP4	$BITOPT(15)
-#define	SDL_K_TYPE_IP6	$BITOPT(16)
+#define	SDL_K_TYPE_HWADDR	$BITOPT(13)
+#define	SDL_K_TYPE_IPADDR	$BITOPT(14)
+#define	SDL_K_TYPE_IP4ADDR	$BITOPT(15)
+#define	SDL_K_TYPE_IP6ADDR	$BITOPT(16)
 #define	SDL_K_TYPE_SOCK	$BITOPT(17)
 
 #define	SDL_K_TYPE_RTN	$BITOPT(18)
@@ -58,8 +56,6 @@
 #define	SDL_K_RADIX_BIN	$BITOPT(1)
 #define	SDL_K_RADIX_OCT	$BITOPT(2)
 #define	SDL_K_RADIX_HEX	$BITOPT(3)
-
-
 
 #define	SDL_K_ALIGN_DEF		0
 #define	SDL_K_ALIGN_BYTE	1
@@ -158,6 +154,7 @@ typedef struct	__sdl_aggregate__
 		pref,
 		tag;
 
+	int	aggtype;
 	int	align;
 } SDL_AGGREGATE;
 

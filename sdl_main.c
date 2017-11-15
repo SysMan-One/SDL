@@ -5,7 +5,7 @@
 **
 **  FACILITY:  StarLet Structure Definition Language processor
 **
-**  ABSTRACT: A portable implemenation of a processor of the SDL (Structure Definition Language) based on the
+**  ABSTRACT: A portable implementation of SDL processor (Structure Definition Language, The) based on the
 **	OpenVMS father.
 **
 **  AUTHORS: Ruslan R. Laishev (RRL)
@@ -67,9 +67,9 @@ FILE *	finp;
 
 	yyset_in(finp, scanner);
 
-	do {
+	//do {
 		yyparse(scanner);
-	} while ( !feof(finp) );
+	//} while ( !feof(finp) );
 
 	yylex_destroy(scanner);
 

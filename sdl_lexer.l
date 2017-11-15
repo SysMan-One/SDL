@@ -53,7 +53,7 @@
 
 white_spaces	[ \t\n\r\v\f]+
 
-identifier	[_a-z][_a-zA-Z0-9]+
+identifier	[_a-z][_a-zA-Z0-9]*
 
 comment_string	"/*"[.]*[^\n]
 
@@ -89,6 +89,7 @@ quoted_string	\"(\\.|[^"\\])*\"
 "aggregate"	{ return	KWD_AGGREGATE; }
 "end_aggregate"	{ return	KWD_END_AGGREGATE; }
 "structure"	{ return	KWD_STRUCT; }
+"struct"	{ return	KWD_STRUCT; }
 "union"		{ return	KWD_UNION; }
 "end"		{ return	KWD_END; }
 
@@ -119,7 +120,7 @@ quoted_string	\"(\\.|[^"\\])*\"
 "%d"[0-9]+	{ yylval->bval = atoi(yytext); return decimal; }
 "%x"[0-9a-fA-F]+ { yylval->bval = atoi(yytext); return hexadecimal; }
 "%o"[0-7]+	{ yylval->bval = atoi(yytext); return octal; }
-[1-9][0-9]*	{ yylval->bval = atoi(yytext); return decimal; }
+([0])|([1-9][0-9]*)	{ yylval->bval = atoi(yytext); return decimal; }
 [0][x][0-9a-fA-F]+ { yylval->bval = atoi(yytext); return hexadecimal; }
 [0][0-7]+	{ yylval->bval = atoi(yytext); return octal; }
 

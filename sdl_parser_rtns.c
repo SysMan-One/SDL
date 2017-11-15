@@ -142,6 +142,7 @@ inline static char *	radix2fmt
 			return	"%#llo";
 		}
 
+	/* SDL_K_RADIX_DEC */
 	return	"%lld";
 }
 
