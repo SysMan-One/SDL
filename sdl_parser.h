@@ -1,8 +1,8 @@
 /* A Bison parser, made by GNU Bison 3.0.4.  */
 
-/* Skeleton interface for Bison GLR parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -110,13 +110,12 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 52 "sdl_parser.y" /* glr.c:197  */
+#line 80 "sdl_parser.y" /* yacc.c:1909  */
 
 	int	bval;
-	char	tval[1024];
-	char *	tptr;
+	char	tval[8192];
 
-#line 120 "sdl_parser.h" /* glr.c:197  */
+#line 119 "sdl_parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

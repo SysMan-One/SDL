@@ -39,7 +39,6 @@
 
 extern	int	trace;
 
-
 int	sdl_end_module	(
 	SDL_CTX *	sdlctx
 			)
@@ -142,8 +141,89 @@ inline static char *	radix2fmt
 			return	"%#llo";
 		}
 
+	/* SDL_K_RADIX_DEC */
 	return	"%lld";
 }
+
+
+
+struct __tbl_types {
+	int	type;
+
+	char	pref[16],
+		ctype[32];
+};
+
+const struct __tbl_types tbl_types [] = {
+	{SDL_K_TYPE_BYTE, "b", "char "},
+	{SDL_K_TYPE_WORD, "w", "short "},
+	{SDL_K_TYPE_LONG, "l", "int "},
+	{SDL_K_TYPE_QUAD, "q", "long long "},
+	{SDL_K_TYPE_OCTA, "o", "quadword "},
+	{SDL_K_TYPE_BFLD, "v", "bitfield "},
+	{SDL_K_TYPE_FLT, "f", "float "},
+	{SDL_K_TYPE_DBL, "d", "double "},
+	{SDL_K_TYPE_PCKD, "p", "packed "},
+	{SDL_K_TYPE_ASCIC, "ac", "ASC "},
+	{SDL_K_TYPE_SDESC, "ds", "DESCRIPTOR "},
+	{SDL_K_TYPE_HWADDR, "hw", "HWADDR "},
+	{SDL_K_TYPE_IPADDR, "ip", "struct in_addr "},
+	{SDL_K_TYPE_IP4ADDR, "ip4", "struct in_addr "},
+	{SDL_K_TYPE_IP6ADDR, "ip6", "struct in_addr6 "},
+	{SDL_K_TYPE_SOCK, "sk", "struct sockaddr_in "},
+	{SDL_K_TYPE_RTN, "r",	"()(...) "},
+	{SDL_K_TYPE_PTR, "a",	"* "},
+	{SDL_K_TYPE_UNSG, "", "unsigned "},
+	{0, 0} };
+
+
+
+inline static char *	type2pref
+		(
+		int	type
+		)
+{
+int	mask, bit;
+struct __tbl_types * tbl_ptr = &tbl_types;
+
+	for ( mask = 1, bit = 0; bit < 32; bit++, mask <<= 1)
+		{
+		for ( tbl_ptr = tbl_types; tbl_ptr->pref && tbl_ptr->type; tbl_ptr++ )
+			if ( tbl_ptr->type & (mask & type) )
+				return	tbl_ptr->pref;
+		}
+
+	return	"?x?";
+}
+
+
+inline static char *	type2ctype
+		(
+		int	type,
+		char *	ctype
+		)
+{
+int	mask, bit;
+struct __tbl_types * tbl_ptr = &tbl_types;
+char	buf[64] = {0};
+
+	for ( mask = 1, bit = 0; bit < 32; bit++, mask <<= 1)
+		{
+		for ( tbl_ptr = tbl_types; tbl_ptr->ctype && tbl_ptr->type; tbl_ptr++ )
+			if ( tbl_ptr->type & (mask & type) )
+				{
+				strcat(buf, tbl_ptr->ctype);
+				break;
+				}
+		}
+
+	if ( strlen(buf) )
+		return	strcpy(ctype, buf);
+
+
+	return	"?x?";
+}
+
 
 
 int	sdl_constant	(
@@ -212,15 +292,6 @@ int	len, status;
 }
 
 
-int	sdl_align	(
-		SDL_CTX	*	ctx,
-		int		align
-			)
-{
-	return	STS$K_SUCCESS;
-}
-
-
 int	sdl_constlist	(
 	SDL_CONSTLIST *	li,
 		char *	id,
@@ -240,7 +311,8 @@ SDL_CONSTITEM *ci;
 	ci->val = val;
 	ci->setf= setf;
 
-	status = $INSQTAIL(li, ci, &count);
+	if ( !(1 & (status = $INSQTAIL(li, ci, &count))) )
+		$LOG(status, "Error addition of the %s", id);
 
 	return	STS$K_SUCCESS;
 }
@@ -346,6 +418,151 @@ struct iovec iov [] = { {buf, 0}, {CRLF, 2} };
 
 		free(ci);
 		}
+
+	return	STS$K_SUCCESS;
+}
+
+
+int	sdl_agg_init	(
+		SDL_AGGREGATE *	agg,
+		char *		id
+			)
+{
+int	len = (id ? strnlen(id, ASC$K_SZ) : 0);
+
+	$TRACE("AGGREGATE <id=%s>", id);
+
+	/* Check that previous AGGREGATE has been closed by END_AGGREGATE */
+	if ( id && $ASCLEN(&agg->id) )
+		if ( ($ASCLEN(&agg->id) == len)
+			|| strncasecmp(id, $ASCPTR(&agg->id), len) )
+		return	$LOG(STS$K_ERROR, "AGGREGATE %.s has not been closed");
+
+	/* Initialize context for new AGGREGATE */
+	memset (agg, 0, sizeof(SDL_AGGITEM) );
+
+	sdl_str2asc(id, &agg->id);
+	sdl_str2asc(id, &agg->tag);
+}
+
+int	sdl_aggitem_add	(
+		SDL_AGGREGATE *	agg,
+		char *		id,
+		int		itmtype
+			)
+{
+int	status, count;
+SDL_AGGITEM * itm;
+
+	if ( !(itm = calloc(1, sizeof(SDL_AGGITEM))) )
+		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_AGGITEM), errno);
+
+	sdl_str2asc(id, &itm->id);
+	sdl_str2asc(id, &itm->tag);
+
+	agg->item = itm;
+	agg->item->itemtype = itmtype;
+
+	if ( !(1 & (status = $INSQTAIL(agg, itm, &count))) )
+		$LOG(status, "Error addition of the %s", id);
+
+	return	STS$K_SUCCESS;
+}
+
+int	sdl_def_aggregate(
+		SDL_CTX *	sdlctx,
+		SDL_AGGREGATE *	agg
+		)
+{
+char	buf[8192], ctype[64], *src, *dst, fill[128];
+int	len, status, count, deeplvl;
+SDL_AGGITEM *itm;
+struct iovec iov [] = { {fill, 0}, {buf, 0}, {CRLF, 2} };
+ASC	stack_tag[32];
+
+	memset(fill, ' ', sizeof(fill) );
+
+	deeplvl = 0;
+	stack_tag[0] = agg->tag;
+
+
+	/* Start of definition ... */
+	len = sprintf(buf, "\n#pragma	pack (push)\n" );
+
+	if ( agg->align == SDL_K_ALIGN_DEF )
+		len += sprintf(buf + len, "#pragma	pack\n");
+	else	len += sprintf(buf + len, "#pragma	pack %d\n", agg->align);
+
+	len += sprintf(buf + len, "typedef	%s	__%.*s__ {\n",
+		      (agg->aggtype == SDL_K_AGGTYPE_STRUCT) ? "struct" : "union",
+		      $ASC(&agg->id) );
+
+	if ( len != (status = write(sdlctx->fd, buf, len)) )
+		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+
+
+	while ( 1 & $REMQHEAD(&agg->list, &itm, &count) )
+		{
+		if ( !count )
+			break;
+
+
+		/* Nested STRUCTURE/UNION <id>  ... END <id> */
+		if ( (itm->itemtype == SDL_K_ITMTYPE_STRUCT)
+		     || (itm->itemtype == SDL_K_ITMTYPE_UNION) )
+			{
+			len = sprintf(buf, "%s %.*s {\n",
+				   (agg->aggtype == SDL_K_AGGTYPE_STRUCT) ? "struct" : "union",
+				      $ASC(&itm->id));
+
+			if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
+				return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+
+			deeplvl++;
+			iov[0].iov_len = (1 + deeplvl) * 4;
+			stack_tag[deeplvl] = itm->tag;
+			}
+		else if ( itm->itemtype == SDL_K_ITMTYPE_END )
+			{
+			if ( deeplvl )
+				{
+				iov[1].iov_len = sprintf(buf, "} %.*s;", $ASC(&itm->id));
+
+				if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
+					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+
+
+				deeplvl--;
+				iov[0].iov_len = (1 + deeplvl) * 4;
+				}
+			}
+		else	{
+			/* Generate and write to file footer part of definitions */
+			iov[0].iov_len = (1 + deeplvl) * 4;
+			iov[1].iov_len = sprintf(buf, "%s	%.*s%s_%.*s;",  type2ctype (itm->typespec, ctype),
+				      $ASC(&stack_tag[deeplvl]), type2pref (itm->typespec), $ASC(&itm->id));
+
+			if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
+				{
+				$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+				break;
+				}
+			}
+
+		free(itm);
+		}
+
+
+	/* End of definition ... */
+	len = sprintf(buf, "} %.*s;\n", $ASC(&itm->id) );
+	len += sprintf(buf + len, "#pragma	pack (pop)\n");
+
+	if ( len != (status = write(sdlctx->fd, buf, len)) )
+		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+
+
+	/* Reset AGGREGATE context area */
+	memset(agg, 0, sizeof(SDL_AGGITEM));
 
 	return	STS$K_SUCCESS;
 }
