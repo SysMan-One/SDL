@@ -68,9 +68,9 @@ FILE *	finp;
 
 	yyset_in(finp, scanner);
 
-	do {
+	//do {
 		yyparse(scanner);
-	} while ( !feof(finp) );
+	//} while ( !feof(finp) );
 
 	yylex_destroy(scanner);
 
