@@ -1,4 +1,5 @@
 #define	__MODULE__	"SDL"
+#define	__IDENT__	"X.05-01"
 
 /*
 **++
