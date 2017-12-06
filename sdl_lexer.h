@@ -507,7 +507,7 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 143 "sdl_lexer.l"
+#line 140 "sdl_lexer.l"
 
 
 #line 514 "sdl_lexer.h"

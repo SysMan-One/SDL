@@ -68,38 +68,39 @@ extern int yydebug;
     KWD_PTR = 278,
     KWD_VOID = 279,
     KWD_ENTRY = 280,
-    KWD_NOALIGN = 281,
-    KWD_ALIGN = 282,
-    KWD_ASCIC = 283,
-    KWD_DESC = 284,
-    KWD_HWADDR = 285,
-    KWD_IPADDR = 286,
-    KWD_IP4ADDR = 287,
-    KWD_IP6ADDR = 288,
-    KWD_SOCKET = 289,
-    KWD_CONST = 290,
-    KWD_EQ = 291,
-    KWD_INC = 292,
-    OPEN_LIST = 293,
-    COMMA = 294,
-    CLOSE_LIST = 295,
-    KWD_RADIX = 296,
-    KWD_DEC = 297,
-    KWD_HEX = 298,
-    KWD_OCT = 299,
-    KWD_BIN = 300,
-    KWD_AGGREGATE = 301,
-    KWD_STRUCT = 302,
-    KWD_UNION = 303,
-    KWD_END = 304,
-    sdlvar = 305,
-    decimal = 306,
-    hexadecimal = 307,
-    octal = 308,
-    id = 309,
-    comment = 310,
-    quoted_string = 311,
-    EOL = 312
+    KWD_MASK = 281,
+    KWD_NOALIGN = 282,
+    KWD_ALIGN = 283,
+    KWD_ASCIC = 284,
+    KWD_DESC = 285,
+    KWD_HWADDR = 286,
+    KWD_IPADDR = 287,
+    KWD_IP4ADDR = 288,
+    KWD_IP6ADDR = 289,
+    KWD_SOCKET = 290,
+    KWD_CONST = 291,
+    KWD_EQ = 292,
+    KWD_INC = 293,
+    OPEN_LIST = 294,
+    COMMA = 295,
+    CLOSE_LIST = 296,
+    KWD_RADIX = 297,
+    KWD_DEC = 298,
+    KWD_HEX = 299,
+    KWD_OCT = 300,
+    KWD_BIN = 301,
+    KWD_AGGREGATE = 302,
+    KWD_STRUCT = 303,
+    KWD_UNION = 304,
+    KWD_END = 305,
+    sdlvar = 306,
+    decimal = 307,
+    hexadecimal = 308,
+    octal = 309,
+    id = 310,
+    comment = 311,
+    quoted_string = 312,
+    EOL = 313
   };
 #endif
 
@@ -108,12 +109,12 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 82 "sdl_parser.y" /* yacc.c:1909  */
+#line 84 "sdl_parser.y" /* yacc.c:1909  */
 
 	int	bval;
 	char	tval[8192];
 
-#line 117 "sdl_parser.h" /* yacc.c:1909  */
+#line 118 "sdl_parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

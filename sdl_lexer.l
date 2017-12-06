@@ -50,16 +50,13 @@
 %option	case-insensitive
 %option	8bit
 
-
 white_spaces	[ \t\n\r\v\f]+
 
 identifier	[_a-z][_a-zA-Z0-9]*
 
-comment_string	"/*"[.]*[^\n]
+comment_string	"/*".*
 
 quoted_string	\"(\\.|[^"\\])*\"
-
-
 
 %s	module
 

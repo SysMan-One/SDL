@@ -1,19 +1,20 @@
 #define	__MODULE__	"SDL_ACTRTN"
-#define	__IDENT__	"X.05-01"
-
+#define	__IDENT__	"X.05-02"
 
 /*
 **++
 **
 **  FACILITY:  StarLet Structure Definition Language
 **
-**  ABSTRACT: A set of 'actions' routines is supposed to be called from the sdl_parser.
+**  ABSTRACT: A set of 'actions' routines is supposed to be called from the sdl_parser.c
 **
 **  AUTHORS: Ruslan R. Laishev (RRL)
 **
 **  CREATION DATE:  9-NOV-2017
 **
 **  MODIFICATION HISTORY:
+**
+**	22-NOV-2017	RRL	Added handling of the ALIGN attribute of the structure/union
 **
 **--
 */
@@ -43,7 +44,8 @@ extern	int	trace;
 
 
 /**
- * @brief __util$str2asc - Copying quoted ASCIIZ string to ASCIC container
+ * @brief sdl_qstr2asc - Copying quoted ASCIIZ string (with conversion to lower case)
+ *	 to ASCIC container.
  *
  * @param src - A source quoted ASCIIZ string
  * @param dst - An ASCIC container to accept result of copying
@@ -79,13 +81,49 @@ char	*cp = $ASCPTR(dst);
 			continue;
 
 
-		*(cp++) = *src;
+		*(cp++) = (unsigned char) tolower(*src);
 		$ASCLEN(dst)++;
 		}
 
 	return	$ASCLEN(dst);
 }
 
+/**
+ * @brief sdl_asc2up - convert ASCIC string to upper case
+ *
+ * @param src - ASCIC string to be converted
+ *
+ * @return	- an actual data length in the ASCIC
+ */
+int	sdl_asc2up	(
+		ASC *	src
+			)
+{
+int	len;
+unsigned char *	cp;
+
+	for ( len = $ASCLEN(src), cp = $ASCPTR(src); len; len--, cp++ )
+	      *(cp) = (unsigned char) toupper(*cp);
+}
+
+/**
+ * @brief sdl_asc2low - convert ASCIC string to lower case
+ *
+ * @param src - ASCIC string to be converted
+ *
+ * @return	- an actual data length in the ASCIC
+ */
+int	sdl_asc2low
+			(
+		ASC *	src
+			)
+{
+int	len;
+unsigned char *	cp;
+
+	for ( len = 1 + $ASCLEN(src), cp = $ASCPTR(src); len; len--, cp++ )
+	      *(cp) = (unsigned char) tolower(*cp);
+}
 
 int	sdl_end_module	(
 	SDL_CTX *	sdlctx
@@ -290,28 +328,6 @@ int	sdl_constant	(
 	return	STS$K_SUCCESS;
 }
 
-int	sdl_const_pref	(
-	SDL_CONSTANT *	ctx,
-		char *	pref
-			)
-{
-	$ASCLEN(&ctx->pref) = (unsigned char) strnlen(pref, ASC$K_SZ);
-	memcpy($ASCPTR(&ctx->pref), pref, $ASCLEN(&ctx->pref) );
-
-	return	STS$K_SUCCESS;
-}
-
-int	sdl_const_tag	(
-	SDL_CONSTANT *	ctx,
-		char *	tag
-			)
-{
-	$ASCLEN(&ctx->tag) = (unsigned char) strnlen(tag, ASC$K_SZ);
-	memcpy($ASCPTR(&ctx->tag), tag, $ASCLEN(&ctx->tag) );
-
-	return	STS$K_SUCCESS;
-}
-
 
 int	sdl_def_constant(
 		SDL_CTX *	sdlctx,
@@ -361,61 +377,6 @@ SDL_CONSTITEM *ci;
 
 	if ( !(1 & (status = $INSQTAIL(li, ci, &count))) )
 		$LOG(status, "Error addition of the %s", id);
-
-	return	STS$K_SUCCESS;
-}
-
-
-int	sdl_constlist_radix	(
-	SDL_CONSTLIST *	clist,
-		int	radix
-			)
-{
-	clist->radix = radix;
-
-	return	STS$K_SUCCESS;
-}
-
-
-int	sdl_constlist_inc	(
-	SDL_CONSTLIST *	clist,
-		int	inc
-			)
-{
-	clist->inc = inc;
-
-	return	STS$K_SUCCESS;
-}
-
-int	sdl_constlist_val	(
-	SDL_CONSTLIST *	clist,
-		int	val
-			)
-{
-	clist->val = val;
-
-	return	STS$K_SUCCESS;
-}
-
-
-int	sdl_constlist_pref(
-	SDL_CONSTLIST *	ctx,
-		char *	pref
-			)
-{
-	$ASCLEN(&ctx->pref) = (unsigned char) strnlen(pref, ASC$K_SZ);
-	memcpy($ASCPTR(&ctx->pref), pref, $ASCLEN(&ctx->pref) );
-
-	return	STS$K_SUCCESS;
-}
-
-int	sdl_constlist_tag	(
-	SDL_CONSTLIST *	ctx,
-		char *	tag
-			)
-{
-	$ASCLEN(&ctx->tag) = (unsigned char) strnlen(tag, ASC$K_SZ);
-	memcpy($ASCPTR(&ctx->tag), tag, $ASCLEN(&ctx->tag) );
 
 	return	STS$K_SUCCESS;
 }
@@ -516,7 +477,7 @@ SDL_AGGITEM * itm;
 	if ( !(1 & (status = $INSQTAIL(agg, itm, &count))) )
 		$LOG(status, "Error addition of the %s", id);
 
-	$TRACE("ITEM #%d <id=%.*s>, TAG <%.*s>", itmtype, $ASC(&agg->id), $ASC(&agg->tag) );
+	$TRACE("ITEM #%d <id=%.*s>, TAG <%.*s>", itmtype, $ASC(&itm->id), $ASC(&itm->tag) );
 
 	return	STS$K_SUCCESS;
 }
@@ -526,8 +487,8 @@ int	sdl_def_aggregate(
 		SDL_AGGREGATE *	agg
 		)
 {
-char	buf[8192], ctype[64], *src, *dst, fill[128];
-int	len, status, count, deeplvl;
+char	buf[8192], ctype[64], fill[128];
+int	len, status, count, deeplvl, align = 0;
 SDL_AGGITEM *itm;
 struct iovec iov [] = { {fill, 0}, {buf, 0}, {CRLF, 2} };
 ASC	stack_tag[32];
@@ -545,9 +506,9 @@ ASC	stack_tag[32];
 		len += sprintf(buf + len, "#pragma	pack\n");
 	else	len += sprintf(buf + len, "#pragma	pack %d\n", agg->align);
 
-	len += sprintf(buf + len, "typedef	%s	__%.*s__ {\n",
-		      (agg->aggtype == SDL_K_AGGTYPE_STRUCT) ? "struct" : "union",
-		      $ASC(&agg->id) );
+	len += sprintf(buf + len, "typedef	%s	__%.*s%.*s__ {\n",
+		(agg->aggtype == SDL_K_AGGTYPE_STRUCT) ? "struct" : "union",
+		$ASC(&agg->pref), $ASC(&agg->id) );
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
 		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
@@ -565,8 +526,17 @@ ASC	stack_tag[32];
 			{
 			iov[0].iov_len = (1 + deeplvl) * 4;
 
-			iov[1].iov_len = sprintf(buf, "    %s /* %.*s */ {",
-				   (agg->aggtype == SDL_K_AGGTYPE_STRUCT) ? "struct" : "union",
+			if ( (itm->itemtype == SDL_K_ITMTYPE_STRUCT) &&
+				(align = (agg->align != itm->align)) )
+				{
+				len = sprintf(buf, "#pragma	pack (push) /* begin-of-%.*s */\n#pragma	pack %d\n", $ASC(&itm->id), itm->align);
+
+				if ( len != (status = write(sdlctx->fd, buf, len)) )
+					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+				}
+
+			iov[1].iov_len = sprintf(buf , "%s /* %.*s */ {",
+				   (itm->itemtype == SDL_K_ITMTYPE_STRUCT) ? "struct" : "union",
 				      $ASC(&itm->id));
 
 			if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
@@ -582,6 +552,13 @@ ASC	stack_tag[32];
 				iov[1].iov_len = sprintf(buf, "} %.*s;", $ASC(&itm->id));
 
 				if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
+					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+
+
+				if ( align )
+					len = sprintf(buf, "\n#pragma	pack (pop) /* end-of-%.*s */\n", $ASC(&itm->id));
+
+				if ( len != (status = write(sdlctx->fd, buf, len)) )
 					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
 
 
@@ -612,7 +589,10 @@ ASC	stack_tag[32];
 
 
 	/* End of definition ... */
-	len = sprintf(buf, "} %.*s;\n", $ASC(&itm->id) );
+	sdl_asc2up (&agg->id);
+	sdl_asc2up (&agg->pref);
+
+	len = sprintf(buf, "} %.*s%.*s;\n", $ASC(&agg->pref), $ASC(&agg->id) );
 	len += sprintf(buf + len, "#pragma	pack (pop)\n");
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
@@ -621,6 +601,27 @@ ASC	stack_tag[32];
 
 	/* Reset AGGREGATE context area */
 	memset(agg, 0, sizeof(SDL_AGGITEM));
+
+	return	STS$K_SUCCESS;
+}
+
+
+int	sdl_comment	(
+		SDL_CTX *	sdlctx,
+		char	*	comment
+			)
+{
+int	status, len;
+struct iovec iov [] = { {comment, 0}, {" */" CRLF, 5} };
+
+	if ( ! sdlctx || !sdlctx->fd )
+		return	STS$K_WARN;
+
+	len = iov[0].iov_len = strnlen(comment, 512);
+	len += iov[1].iov_len;
+
+	if ( 0 > (status = writev(sdlctx->fd, iov, 2)) )
+		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
 
 	return	STS$K_SUCCESS;
 }

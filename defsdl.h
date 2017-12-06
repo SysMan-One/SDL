@@ -49,6 +49,7 @@
 #define	SDL_K_TYPE_RTN		$BITOPT(18)
 #define	SDL_K_TYPE_VOID		$BITOPT(19)
 #define	SDL_K_TYPE_PTR		$BITOPT(20)
+#define	SDL_K_TYPE_MASK		$BITOPT(21)
 
 
 #define	SDL_K_RADIX_DEF		$BITOPT(0)
@@ -95,6 +96,7 @@ typedef	struct	__sdl_constant__
 		tag;
 
 	int	val,
+		mask,
 		radix;
 } SDL_CONSTANT;
 
@@ -118,6 +120,7 @@ typedef struct	__sdl_conslist__
 		tag;
 
 	int	val,
+		mask,
 		radix,
 		inc;
 } SDL_CONSTLIST;

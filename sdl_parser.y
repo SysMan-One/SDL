@@ -36,6 +36,8 @@
 **
 **  MODIFICATION HISTORY:
 **
+**	22-NOV-2017	RRL	Added KWD_MASK handling.
+**
 **--
 */
 
@@ -118,6 +120,7 @@ SDL_AGGITEM	sdlaggitem = {0};	/* AGGREGATE's items contexts	*/
 %token	KWD_PTR
 %token	KWD_VOID
 %token	KWD_ENTRY
+%token	KWD_MASK
 
 %token	KWD_NOALIGN
 %token	KWD_ALIGN
@@ -170,7 +173,9 @@ prog	:	%empty
 	;
 		
 line
-	: comment
+	: %empty
+	| comment
+		{ sdl_comment(sdlctx, $1); }
 	| module
 	| end_module
 	| aggregate
@@ -205,6 +210,7 @@ pref	: KWD_PREFIX quoted_string
 inc	: KWD_INC value
 		{ $$ = $2; }
 	;
+
 
 sizespec
 	: KWD_LENGTH value
@@ -302,26 +308,36 @@ aggtypes
 	;
 
 constant_opts
-	: pref	{ sdl_str2asc ( $1, &sdlconst.pref); } 
+	: %empty
+	| pref	{ sdl_str2asc ( $1, &sdlconst.pref); } 
 			constant_opts
 	| tag	{ sdl_qstr2asc ($1,  &sdlconst.tag); } 
 			constant_opts
+	| KWD_MASK
+		{ sdlconst.mask = SDL_K_TYPE_MASK; }
+			constlist_opts
+
 
 	| EOL { sdl_def_constant (sdlctx, &sdlconst); }
 	;
 
 constlist_opts
-	: pref	{ sdl_qstr2asc ( $1, &sdlconstlist.pref); } 
+	: %empty
+	| pref	{ sdl_qstr2asc ( $1, &sdlconstlist.pref); } 
 			constlist_opts
 
 	| tag	{ sdl_qstr2asc ( $1, &sdlconstlist.tag); } 
 			constlist_opts
 
 	| inc
-		{ sdl_constlist_inc ( &sdlconstlist, $1); }
+		{ sdlconstlist.inc = $1; }
 			constlist_opts
 	| radix
-		{ sdl_constlist_radix ( &sdlconstlist, $1); }
+		{ sdlconstlist.radix = $1; }
+			constlist_opts
+
+	| KWD_MASK
+		{ sdlconstlist.mask = SDL_K_TYPE_MASK; }
 			constlist_opts
 
 	| EOL { sdl_def_constlist (sdlctx, &sdlconstlist); }
@@ -329,8 +345,9 @@ constlist_opts
 	;
 
 constlist_ids
-	: id KWD_EQ value
-		{ sdl_constlist( &sdlconstlist, $1, $3, 1); }
+	: %empty
+	| id KWD_EQ value
+		{ sdlconstlist.val = $3; }
 			constlist_ids
 
 	| id 
@@ -344,8 +361,9 @@ constlist_ids
 	;		
 
 constant
-	: KWD_CONST OPEN_LIST constlist_ids KWD_EQ value 
-			{sdl_constlist_val (&sdlconstlist, $5); }
+	: %empty
+	| KWD_CONST OPEN_LIST constlist_ids KWD_EQ value 
+			{ sdlconstlist.val = $5; }
 			constlist_opts
 
 	| KWD_CONST id KWD_EQ value
@@ -368,32 +386,10 @@ struct_items
 		KWD_END id EOL
 			{ sdl_aggitem_add(&sdlagg, $7, SDL_K_ITMTYPE_END); }
 
-	| id basetypes
-		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
-		  sdlagg.item->typespec = $2; }
-		field_opts
-		struct_items
-
-	| id syntypes
-		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
-		  sdlagg.item->typespec = $2; }
-		field_opts
-		struct_items
-
-	;
-
-
-
-union_items 
-	: %empty
-
-	| KWD_END id EOL
-		{ sdl_aggitem_add(&sdlagg, $2, SDL_K_ITMTYPE_END); }
-
-	| id KWD_STRUCT
-		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_STRUCT); }
-		struct_opts
-		struct_items
+	| id KWD_UNION
+		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_UNION); }
+		union_opts
+		union_items
 		KWD_END id EOL
 			{ sdl_aggitem_add(&sdlagg, $7, SDL_K_ITMTYPE_END); }
 
@@ -413,6 +409,44 @@ union_items
 
 
 
+/*	UNION <id> [PREFIX <pref> [TAG <tag]]
+*/
+union_items 
+	: %empty
+
+	| KWD_END id EOL
+		{ sdl_aggitem_add(&sdlagg, $2, SDL_K_ITMTYPE_END); }
+
+	| id KWD_STRUCT
+		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_STRUCT); }
+		struct_opts
+		struct_items
+		KWD_END id EOL
+			{ sdl_aggitem_add(&sdlagg, $7, SDL_K_ITMTYPE_END); }
+
+	| id KWD_UNION
+		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_UNION); }
+		union_opts
+		union_items
+		KWD_END id EOL
+			{ sdl_aggitem_add(&sdlagg, $7, SDL_K_ITMTYPE_END); }
+
+	| id basetypes
+		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
+		  sdlagg.item->typespec = $2; }
+		field_opts
+		union_items
+
+	| id syntypes
+		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
+		  sdlagg.item->typespec = $2; }
+		field_opts
+		union_items
+
+	;
+
+
+
 /*	STRUCTURE <id> [PREFIX <pref> [TAG <tag]|[ALIGN [<align>]]
 */
 struct_opts
@@ -423,7 +457,7 @@ struct_opts
 		{ sdl_qstr2asc($1, &sdlagg.item->pref); }
 		struct_opts
 	| align
-		{ sdlagg.align = $1; }
+		{ sdlagg.item->align = $1; }
 		struct_opts
 	| EOL
 	;
