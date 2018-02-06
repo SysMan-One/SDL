@@ -45,16 +45,17 @@
 %option	noyywrap
 %option	reentrant
 
-%option	warn
+%option	debug
 %option	yylineno
 %option	case-insensitive
 %option	8bit
 
 white_spaces	[ \t\n\r\v\f]+
 
-identifier	[_a-z][_a-zA-Z0-9]*
+identifier	[$_a-zA-Z][$_a-zA-Z0-9]*
 
-comment_string	"/*".*
+comment_string	("/*"|"{"|"!").*
+
 
 quoted_string	\"(\\.|[^"\\])*\"
 
@@ -116,15 +117,15 @@ quoted_string	\"(\\.|[^"\\])*\"
 "bin"		{ return	KWD_BIN; }
 
 "%d"[0-9]+	{ yylval->bval = atoi(yytext); return decimal; }
-"%x"[0-9a-fA-F]+ { yylval->bval = atoi(yytext); return hexadecimal; }
-"%o"[0-7]+	{ yylval->bval = atoi(yytext); return octal; }
+"%x"[0-9a-fA-F]+ { strcpy(yylval->tval, yytext); return hexadecimal; }
+"%o"[0-7]+	{ strcpy(yylval->tval, yytext); return octal; }
 ([0])|([1-9][0-9]*)	{ yylval->bval = atoi(yytext); return decimal; }
-[0][x][0-9a-fA-F]+ { yylval->bval = atoi(yytext); return hexadecimal; }
-[0][0-7]+	{ yylval->bval = atoi(yytext); return octal; }
+[0][x][0-9a-fA-F]+ { strcpy(yylval->tval, yytext); return hexadecimal; }
+[0][0-7]+	{ strcpy(yylval->tval, yytext); return octal; }
 
 
 
-";"		{ return 	EOL; }
+";"		{ return	EOL; }
 "("		{ return	OPEN_LIST;}
 ")"		{ return	CLOSE_LIST;}
 ","		{ return	COMMA; }

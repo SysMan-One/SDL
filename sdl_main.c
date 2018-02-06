@@ -1,5 +1,5 @@
 #define	__MODULE__	"SDL"
-#define	__IDENT__	"X.05-02"
+#define	__IDENT__	"X.50-03"
 
 /*
 **++
@@ -24,7 +24,7 @@
 **		/LANGUAGE=C	- produce .H file as output
 **
 **		/TARGET=i386	- target C compiler is GCC for x86 (32-bits)
-**		/TARGET=x86_64	- target C compiler is GCC for x86 (32-bits)
+**		/TARGET=x86_64	- target C compiler is GCC for x86 (64-bits)
 **
 **		/TARGET=WIN32	- target C compiler is M$ C/C++
 **		/TARGET=WIN64	- target C compiler is M$ C/C++
@@ -72,6 +72,7 @@ void	yyerror (
 		locp->last_line, locp->last_column, msg);
 }
 
+extern int yydebug;
 
 int	main	(int argc, char *argv[] )
 {
@@ -88,6 +89,7 @@ FILE *	finp;
 	/* Start parsing ... */
 	yylex_init(&scanner);
 	yyset_debug(1, scanner);
+	yydebug = 0;
 
 	yyset_in(finp, scanner);
 

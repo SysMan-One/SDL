@@ -11,6 +11,10 @@
 **
 **  MODIFICATION HISTORY:
 **
+**	02-FEB-2018	RRL	Added rem[ark] field to aggregate's stuff to carry comments.
+**
+**	05-FEB-2018	RRL	Added User defined field type, $BITOPT(22)
+**
 **--
 */
 
@@ -50,6 +54,7 @@
 #define	SDL_K_TYPE_VOID		$BITOPT(19)
 #define	SDL_K_TYPE_PTR		$BITOPT(20)
 #define	SDL_K_TYPE_MASK		$BITOPT(21)
+#define	SDL_K_TYPE_USER		$BITOPT(22)
 
 
 #define	SDL_K_RADIX_DEF		$BITOPT(0)
@@ -66,14 +71,15 @@
 #define	SDL_K_ALIGN_OCTA	16
 #define	SDL_K_ALIGN_PAGE	512
 
-typedef	struct __sdl_ctx__
-{
-	int	fd;
-	ASC	module;
-	ASC	ext;
-} SDL_CTX;
 
 /* Internal SDL Variable, maintained as single linked list	*/
+#define	SDL_K_VARTYPE_NUM	$BITOPT(0)	/* Types	*/
+#define	SDL_K_VARTYPE_STR	$BITOPT(1)
+
+#define	SDL_K_VAR_SET		$BITOPT(0)	/* Operations	*/
+#define	SDL_K_VAR_SUB		$BITOPT(1)
+#define	SDL_K_VAR_ADD		$BITOPT(2)
+
 typedef	struct	__sdl_var__
 {
 	ASC		id;		/* Variable name	*/
@@ -93,7 +99,8 @@ typedef	struct	__sdl_constant__
 {
 	ASC	id,
 		pref,
-		tag;
+		tag,
+		rem;		/* Remark string	*/
 
 	int	val,
 		mask,
@@ -105,19 +112,24 @@ typedef struct	__sdl_constitem__
 {
 	ENTRY	hdr;
 
-	ASC	id;
+	ASC	id,		/* Item name		*/
+		rem;		/* Remark string	*/
 
-	int	val,
-		setf;
+	int	val,		/* Constant value	*/
+		setf;		/* A reset value	*/
 
 } SDL_CONSTITEM;
 
-typedef struct	__sdl_conslist__
+typedef struct	__sdl_constlist__
 {
 	QUEUE	list;
 
+				/* A reference to last added item */
+	SDL_CONSTITEM *item;
+
 	ASC	pref,
-		tag;
+		tag,
+		rem;		/* Remark string	*/
 
 	int	val,
 		mask,
@@ -129,7 +141,6 @@ typedef struct	__sdl_conslist__
 /* A top level structure to keep a definiton of single AGGREGATE clause */
 #define	SDL_K_AGGTYPE_STRUCT	0
 #define	SDL_K_AGGTYPE_UNION	1
-
 
 #define	SDL_K_ITMTYPE_FIELD	0	/* BYTE, ... DESCRIPTOR ...	*/
 #define	SDL_K_ITMTYPE_STRUCT	1	/* A start of a structure definitions */
@@ -143,7 +154,9 @@ typedef struct	__sdl_aggitem__
 
 	ASC	id,
 		pref,
-		tag;
+		tag,
+		rem,		/* Remark string	*/
+		utype;		/* User type name	*/
 
 	int	itemtype,
 		typespec,
@@ -162,13 +175,12 @@ typedef struct	__sdl_aggregate__
 
 	ASC	id,
 		pref,
-		tag;
+		tag,
+		rem;		/* Remark string	*/
 
 	int	aggtype,
 		align;
 } SDL_AGGREGATE;
-
-
 
 
 typedef	struct	__sdl_module__
@@ -177,5 +189,13 @@ typedef	struct	__sdl_module__
 		ident;
 } SDL_MODULE;
 
+
+typedef	struct __sdl_ctx__
+{
+	int	fd;
+	ASC	module;
+	ASC	ext;
+	SDL_VAR *vars;
+} SDL_CTX;
 
 #endif // __DEFSDL_H__

@@ -109,7 +109,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 84 "sdl_parser.y" /* yacc.c:1909  */
+#line 86 "sdl_parser.y" /* yacc.c:1909  */
 
 	int	bval;
 	char	tval[8192];

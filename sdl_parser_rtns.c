@@ -1,5 +1,5 @@
 #define	__MODULE__	"SDL_ACTRTN"
-#define	__IDENT__	"X.05-02"
+#define	__IDENT__	"X.50-03"
 
 /*
 **++
@@ -15,6 +15,8 @@
 **  MODIFICATION HISTORY:
 **
 **	22-NOV-2017	RRL	Added handling of the ALIGN attribute of the structure/union
+**
+**	 6-DEC-2017	RRL	Added action routines to get/set SDL's variables.
 **
 **--
 */
@@ -42,12 +44,152 @@
 
 extern	int	trace;
 
+const	char remprefix [] = "\t//";
+
+
+int	zzstrcpy (char *src, char *dst)
+{
+	return	strcpy(dst, src);
+
+
+}
+
+unsigned long long sdl_hex2ull	(char *src)
+{
+unsigned long long ull = 0;
+
+	sscanf(src, "%x", &ull);
+
+	return	ull;
+}
+
+unsigned long long sdl_oct2ull	(char *src)
+{
+unsigned long long ull = 0;
+
+	sscanf(src, "%o", &ull);
+
+	return	ull;
+}
+
+
+int	sdl_const_rem	(
+			char *	src,
+		SDL_CONSTANT *	dst
+			)
+{
+int	len;
+ASC *	a = &dst->rem;
+
+	$ASCLEN(a) = (unsigned char) sizeof(remprefix) - 1;
+	memcpy( $ASCPTR(a), remprefix, $ASCLEN(a) );
+
+	len = strnlen(src, ASC$K_SZ);
+	len -= 1;
+	src += 1;
+
+	memcpy( $ASCPTR(a) + $ASCLEN(a), src, len );
+
+	$ASCLEN(a) += len;
+
+	return	$ASCLEN(a);
+}
+
+
+int	sdl_constlist_rem	(
+			char *	src,
+		SDL_CONSTLIST *	dst
+			)
+{
+int	len;
+ASC *	a;
+
+
+	if ( dst->item )
+		a = &dst->item->rem;
+	else	a = &dst->rem;
+
+	$ASCLEN(a) = (unsigned char) sizeof(remprefix) - 1;
+	memcpy( $ASCPTR(a), remprefix, $ASCLEN(a) );
+
+	len = strnlen(src, ASC$K_SZ);
+	len -= 2;
+	src += 2;
+
+	memcpy( $ASCPTR(a) + $ASCLEN(a), src, len );
+
+	$ASCLEN(a) += len;
+
+	return	$ASCLEN(a);
+}
+
 
 /**
- * @brief sdl_qstr2asc - Copying quoted ASCIIZ string (with conversion to lower case)
- *	 to ASCIC container.
+ * @brief sdl_addrem - Copy remark/comment line to ASCIC container.
  *
  * @param src - A source quoted ASCIIZ string
+ * @param dst - An ASCIC container to accept result of copying
+ *
+ * @return	- an actual data length in the ASCIC
+ */
+int	sdl_aggitem_rem	(
+			char *	src,
+		SDL_AGGITEM *	dst
+			)
+{
+int	len;
+ASC *	a = &dst->rem;
+
+	$ASCLEN(a) = (unsigned char) sizeof(remprefix) - 1;
+	memcpy( $ASCPTR(a), remprefix, $ASCLEN(a) );
+
+	len = strnlen(src, ASC$K_SZ);
+	len -= 2;
+	src += 2;
+
+	memcpy( $ASCPTR(a) + $ASCLEN(a), src, len );
+
+	$ASCLEN(a) += len;
+
+	return	$ASCLEN(a);
+}
+
+
+int	sdl_agg_rem	(
+			char *	src,
+		SDL_AGGREGATE *	dst
+			)
+{
+int	len;
+ASC *	a;
+
+
+	if ( dst->item )
+		a = &dst->item->rem;
+	else	a = &dst->rem;
+
+	$ASCLEN(a) = (unsigned char) sizeof(remprefix) - 1;
+	memcpy( $ASCPTR(a), remprefix, $ASCLEN(a) );
+
+	len = strnlen(src, ASC$K_SZ);
+	len -= 2;
+	src += 2;
+
+	memcpy( $ASCPTR(a) + $ASCLEN(a), src, len );
+
+	$ASCLEN(a) += len;
+
+	return	$ASCLEN(a);
+}
+
+
+
+
+/**
+ * @brief sdl_qstr2asc - Copying quoted ASCIZ string (with conversion to lower case)
+ *	 to ASCIC container.
+ *
+ * @param src - A source quoted ASCIZ string
  * @param dst - An ASCIC container to accept result of copying
  *
  * @return	- an actual data length in the ASCIC
@@ -63,6 +205,14 @@ char	*cp = $ASCPTR(dst);
 
 	len = strnlen(src, ASC$K_SZ);
 	$ASCLEN(dst) = 0;
+
+	if ( !memchr(src, '"', len) )
+		{
+		while ( *(cp++) = (unsigned char) tolower(*(src++)) )
+			$ASCLEN(dst)++;
+
+		return	$ASCLEN(dst);
+		}
 
 	for (q = 0; len; src++ )
 		{
@@ -81,12 +231,18 @@ char	*cp = $ASCPTR(dst);
 			continue;
 
 
-		*(cp++) = (unsigned char) tolower(*src);
+		*(cp++) = *src;
 		$ASCLEN(dst)++;
 		}
 
 	return	$ASCLEN(dst);
 }
+
+
+
+
+
+
 
 /**
  * @brief sdl_asc2up - convert ASCIC string to upper case
@@ -378,6 +534,9 @@ SDL_CONSTITEM *ci;
 	if ( !(1 & (status = $INSQTAIL(li, ci, &count))) )
 		$LOG(status, "Error addition of the %s", id);
 
+	/* Save reference to last added item */
+	li->item = ci;
+
 	return	STS$K_SUCCESS;
 }
 
@@ -399,7 +558,7 @@ struct iovec iov [] = { {buf, 0}, {CRLF, 2} };
 
 		val = ci->setf ? ci->val : val;
 
-		/* Generate and write to file footer part of definitions */
+		/* Generate constant name ... */
 		len = sprintf(buf, "#define	%.*s$K_%.*s$%.*s\t",
 			      $ASC(&li->pref), $ASC(&li->tag), $ASC(&ci->id));
 
@@ -411,8 +570,14 @@ struct iovec iov [] = { {buf, 0}, {CRLF, 2} };
 				status++;
 				}
 
+		/* Value ... */
 		len = status;
 		len += sprintf(buf + status, radix2fmt (li->radix), val );
+
+
+		/* Comment string ... */
+		len += sprintf(buf + len, "%.*s" , $ASC(&ci->rem) );
+
 
 		iov[0].iov_len = len;
 		len += iov[1].iov_len;
@@ -469,7 +634,15 @@ SDL_AGGITEM * itm;
 		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_AGGITEM), errno);
 
 	sdl_str2asc(id, &itm->id);
-	sdl_str2asc(id, &itm->tag);
+
+	if ( itmtype == SDL_K_ITMTYPE_FIELD )
+		{
+		/* A member with the base type, so prefix and tag inherite from top level clause */
+		itm->pref = agg->pref;
+		}
+	else	{
+		sdl_str2asc(id, &itm->tag);
+		}
 
 	agg->item = itm;
 	agg->item->itemtype = itmtype;
@@ -506,9 +679,9 @@ ASC	stack_tag[32];
 		len += sprintf(buf + len, "#pragma	pack\n");
 	else	len += sprintf(buf + len, "#pragma	pack %d\n", agg->align);
 
-	len += sprintf(buf + len, "typedef	%s	__%.*s%.*s__ {\n",
+	len += sprintf(buf + len, "typedef	%s	__%.*s%.*s__ {%.*s\n",
 		(agg->aggtype == SDL_K_AGGTYPE_STRUCT) ? "struct" : "union",
-		$ASC(&agg->pref), $ASC(&agg->id) );
+		$ASC(&agg->pref), $ASC(&agg->id), $ASC(&agg->rem) );
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
 		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
@@ -535,9 +708,9 @@ ASC	stack_tag[32];
 					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
 				}
 
-			iov[1].iov_len = sprintf(buf , "%s /* %.*s */ {",
+			iov[1].iov_len = sprintf(buf , "%s /* %.*s */ {%.*s",
 				   (itm->itemtype == SDL_K_ITMTYPE_STRUCT) ? "struct" : "union",
-				      $ASC(&itm->id));
+				      $ASC(&itm->id), $ASC(&itm->rem));
 
 			if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
 				return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
@@ -549,7 +722,7 @@ ASC	stack_tag[32];
 			{
 			if ( deeplvl )
 				{
-				iov[1].iov_len = sprintf(buf, "} %.*s;", $ASC(&itm->id));
+				iov[1].iov_len = sprintf(buf, "} %.*s;%.*s", $ASC(&itm->id), $ASC(&itm->rem));
 
 				if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
 					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
@@ -566,16 +739,35 @@ ASC	stack_tag[32];
 				iov[0].iov_len = (1 + deeplvl) * 4;
 				}
 			}
-		else	{
-			/* Generate and write to file footer part of definitions */
+		else	{/* Ordinar union/struct member declaration */
 			iov[0].iov_len = (1 + deeplvl) * 4;
 
-			if ( !itm->dimension )
-				iov[1].iov_len = sprintf(buf, "%s	%.*s%s_%.*s;",  type2ctype (itm->typespec, ctype),
-					      $ASC(&stack_tag[deeplvl]), type2pref (itm->typespec), $ASC(&itm->id));
-			else	iov[1].iov_len = sprintf(buf, "%s	%.*s%s_%.*s[%d];",  type2ctype (itm->typespec, ctype),
-						$ASC(&stack_tag[deeplvl]), type2pref (itm->typespec), $ASC(&itm->id),
-							 itm->dimension - 1);
+			/* Add type specification */
+			if ( itm->typespec == SDL_K_TYPE_USER )
+				len = sprintf(buf, "%.*s\t", $ASC(&itm->utype) );
+			else	len = sprintf(buf, "%s\t", type2ctype (itm->typespec, ctype) );
+
+
+			if ( itm->typespec == SDL_K_TYPE_USER )
+				len += sprintf(buf + len, "%.*s%.*s",
+				      $ASC(&stack_tag[deeplvl]), $ASC(&itm->id));
+			else	len += sprintf(buf + len, "%.*s%s_%.*s",
+					$ASC(&stack_tag[deeplvl]), type2pref (itm->typespec), $ASC(&itm->id));
+
+
+			if ( itm->typespec & SDL_K_TYPE_BFLD )
+				len += sprintf(buf + len, ":%d;", itm->dimension - 1);
+			else if ( itm->dimension )
+				len += sprintf(buf + len, "[%d];", itm->dimension - 1);
+			else	len += sprintf(buf + len, ";");
+
+
+			/* Is there a comment line ? */
+			if ( $ASCLEN(&itm->rem) )
+				len += sprintf(buf + len, "%.*s", $ASC(&itm->rem) );
+
+
+			iov[1].iov_len = len;
 
 			if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
 				{
@@ -592,7 +784,7 @@ ASC	stack_tag[32];
 	sdl_asc2up (&agg->id);
 	sdl_asc2up (&agg->pref);
 
-	len = sprintf(buf, "} %.*s%.*s;\n", $ASC(&agg->pref), $ASC(&agg->id) );
+	len = sprintf(buf, "} %.*s%.*s;%.*s\n", $ASC(&agg->pref), $ASC(&agg->id), $ASC(&agg->rem) );
 	len += sprintf(buf + len, "#pragma	pack (pop)\n");
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
@@ -611,17 +803,141 @@ int	sdl_comment	(
 		char	*	comment
 			)
 {
-int	status, len;
-struct iovec iov [] = { {comment, 0}, {" */" CRLF, 5} };
+int	status;
+struct iovec iov [] = { {"//" , 2}, {comment + 1, 0}, {CRLF, 2} };
 
 	if ( ! sdlctx || !sdlctx->fd )
 		return	STS$K_WARN;
 
-	len = iov[0].iov_len = strnlen(comment, 512);
-	len += iov[1].iov_len;
+	iov[1].iov_len = strnlen(comment + 1, 512);
+	iov[1].iov_len;
 
-	if ( 0 > (status = writev(sdlctx->fd, iov, 2)) )
-		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+	if ( 0 > (status = writev(sdlctx->fd, iov, $ARRSZ(iov))) )
+		return	$LOG(STS$K_FATAL, "write() -> %d, errno = %d", status, errno);
+
+	return	STS$K_SUCCESS;
+}
+
+/**
+ * @brief sdl_var_set - Add a local SDL's variable in the stack, initialize it with a given value.
+ *
+ * @param sdlctx:	parser context
+ *
+ * @param name:		variable name
+ * @param value:	value to be set for variable
+ *
+ * @param type:		variable type, see SDL_K_VARTYPE_* constants
+ *
+ * @return:	condition code
+ */
+int	sdl_var_set		(
+		SDL_CTX *	sdlctx,
+		char	*	name,
+		char	*	value,
+		int		type
+			)
+{
+int	len;
+SDL_VAR	*var = sdlctx->vars;
+
+	len = strnlen(name, ASC$K_SZ );
+
+	/* Lookup a variable name in the local set */
+	for ( var = sdlctx->vars; var; var = var->link)
+		{
+		if ( ($ASCLEN(&var->id) == len)
+		     && (!strncasecmp ($ASCPTR(&var->id), name, len)) )
+			break;
+		}
+
+
+	if ( !var )
+		{
+		/* Allocate a memory for new variable */
+		if ( !(var = calloc(1, sizeof(SDL_VAR))) )
+			return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_VAR), errno);
+
+		/* Preset Id and Type */
+		$ASCLEN(&var->id) = len;
+		memcpy($ASCPTR(&var->id), name, len);
+
+		var->type = type;
+
+		/* Add new variable at top of the variable list */
+		var->link = sdlctx->vars;
+		sdlctx->vars = var;
+		}
+
+	/* Variable has been exist, is the types is matching ? */
+	if ( var->type != type )
+		{
+		return	$LOG(STS$K_ERROR, "SDL variable '%.*s' (type %s)  cannot be set with value type %s",
+			     $ASC(&var->id), var->type == SDL_K_VARTYPE_NUM ? "number" : "string",
+			     value, type == SDL_K_VARTYPE_NUM ? "number" : "string");
+		}
+
+	if ( type == SDL_K_VARTYPE_NUM )
+		var->val_int = (int ) value;
+	else	sdl_str2asc(value, &var->val_asc);
+
+	return	STS$K_SUCCESS;
+}
+
+
+
+/**
+ * @brief sdl_var_get - Lookup a variable name in the local storage with a given type,
+ *			return variable value as ASCIZ
+ *
+ * @param sdlctx:	parser context
+ *
+ * @param name:		variable name
+ * @param value:	value to be set for variable
+ *
+ * @param type:		variable type, see SDL_K_VARTYPE_* constants
+ *
+ * @return:	condition code
+ */
+
+int	sdl_var_get		(
+		SDL_CTX *	sdlctx,
+		char	*	name,
+		char	*	value,
+		int		type
+			)
+{
+int	len;
+SDL_VAR	*var = sdlctx->vars;
+
+	len = strnlen(name, ASC$K_SZ );
+
+	/* Lookup a variable name in the local set */
+	for ( var = sdlctx->vars; var; var = var->link)
+		{
+		if ( ($ASCLEN(&var->id) == len)
+		     && (!strncasecmp ($ASCPTR(&var->id), name, len)) )
+			break;
+		}
+
+
+	if ( !var )	/* Did not find anything ! */
+		return $LOG(STS$K_ERROR, "Undefined SDL variable '%s'", name);
+
+	/* Variable has been exist, is the types is matching ? */
+	if ( var->type != type )
+		{
+		return	$LOG(STS$K_ERROR, "Value of SDL variable '%.*s' (type %s)  cannot be converted to type %s",
+			     $ASC(&var->id), var->type == SDL_K_VARTYPE_NUM ? "number" : "string",
+			     type == SDL_K_VARTYPE_NUM ? "number" : "string");
+		}
+
+	/* Copying variable value to the target place */
+	if ( type == SDL_K_VARTYPE_NUM )
+		* ((int *) value) = var->val_int;
+	else	{
+		memcpy(value, $ASCPTR(&var->val_asc), $ASCLEN(&var->val_asc));
+		*(value + $ASCLEN(&var->val_asc)) = '\0';
+		}
 
 	return	STS$K_SUCCESS;
 }

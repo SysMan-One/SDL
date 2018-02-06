@@ -1,4 +1,3 @@
-
 /*
 **++
 **  FACILITY:  StarLet Structure Definition Language
@@ -37,6 +36,8 @@
 **  MODIFICATION HISTORY:
 **
 **	22-NOV-2017	RRL	Added KWD_MASK handling.
+**	
+**	12-DEC-2017	RRL	Added BITFIELD/KWD_BFLD handling.
 **
 **--
 */
@@ -47,10 +48,12 @@
 %token-table
 %define parse.lac	full
 
+%verbose
+%define parse.trace true
+
 /*
 %glr-parser
 */
-%verbose
 
 %lex-param {void *scanner}
 %parse-param {void *scanner}
@@ -144,8 +147,8 @@ SDL_AGGITEM	sdlaggitem = {0};	/* AGGREGATE's items contexts	*/
 %type	<bval>	value
 
 %token	<bval>	decimal		/* Decimal digit		*/
-%token	<bval>	hexadecimal	/* A digit in the hex notaion	*/
-%token	<bval>	octal		/* ... */
+%token	<tval>	hexadecimal	/* A digit in the hex notaion	*/
+%token	<tval>	octal		/* ... */
 
 %token	<tval>	id
 
@@ -163,24 +166,37 @@ SDL_AGGITEM	sdlaggitem = {0};	/* AGGREGATE's items contexts	*/
 %type	<bval>	signspec
 %type	<bval>	align
 %type	<bval>	radix
-
+%type	<tval>	usertypes
 
 %%	/* Beginning of rules	*/
 
-prog	:	%empty
+prog	: %empty
 	| prog	line
 	| prog	error
 	;
+
 		
-line
-	: %empty
+line	: %empty
 	| comment
 		{ sdl_comment(sdlctx, $1); }
 	| module
 	| end_module
 	| aggregate
 	| constant
+	| varset
 	;			
+
+
+varset	: sdlvar KWD_EQ quoted_string { sdl_var_set(sdlctx, $1, $3, SDL_K_VARTYPE_STR); }
+		EOL
+
+	| sdlvar KWD_EQ value { sdl_var_set(sdlctx, $1, $3, SDL_K_VARTYPE_NUM); }
+		EOL
+	;
+	
+
+
+
 
 module	: KWD_MODULE id KWD_IDENT quoted_string EOL
 		{ sdl_module (&sdlctx, $2, $4); }
@@ -191,11 +207,12 @@ end_module
 		{ sdl_end_module (sdlctx, sdlctx->module); }
 	;
 
-					
-value	: sdlvar 	{ $$ = $1; }	/* A has been defined internal SDL's variable	*/
-	| decimal	{ $$ = $1; } 	/* Immediate value: 0x11, %d42343 ...		*/
-	| hexadecimal	{ $$ = $1; } 	
-	| octal		{ $$ = $1; } 	
+					/* A has been defined internal SDL's variable	*/
+value	: sdlvar	{ sdl_var_get(sdlctx, $1, &$$, SDL_K_VARTYPE_NUM); }
+
+	| decimal	{ $$ = $1; }	/* Immediate value: 11, %d42343 ...		*/
+	| hexadecimal	{ $$ = sdl_hex2ull ($1); } 
+	| octal		{ $$ = sdl_oct2ull ($1); } 
 	;
 
 
@@ -272,6 +289,11 @@ syntypes
 		{ $$ = SDL_K_TYPE_VOID; }
 	;
 
+usertypes
+	: id 
+		{ zzstrcpy ($$, $1); }
+	;
+
 align	: KWD_ALIGN
 		{ $$ = SDL_K_ALIGN_DEF; }
 	| KWD_NOALIGN
@@ -317,7 +339,6 @@ constant_opts
 		{ sdlconst.mask = SDL_K_TYPE_MASK; }
 			constlist_opts
 
-
 	| EOL { sdl_def_constant (sdlctx, &sdlconst); }
 	;
 
@@ -347,13 +368,20 @@ constlist_opts
 constlist_ids
 	: %empty
 	| id KWD_EQ value
-		{ sdlconstlist.val = $3; }
-			constlist_ids
+                { sdl_constlist( &sdlconstlist, $1, $3, 1); }
+                        constlist_ids
 
 	| id 
 		{ sdl_constlist( &sdlconstlist, $1, 0, 0); }
 			constlist_ids
+	
+	| COMMA comment 
+		{ sdl_constlist_rem ($2, &sdlconstlist); }
+			constlist_ids
 
+	| comment
+                { sdl_constlist_rem ($1, &sdlconstlist); }
+                        constlist_ids
 
 	| COMMA constlist_ids
 
@@ -366,9 +394,11 @@ constant
 			{ sdlconstlist.val = $5; }
 			constlist_opts
 
+
 	| KWD_CONST id KWD_EQ value
 		{ sdl_constant(&sdlconst, $2, $4); }
 			constant_opts
+
 	;
 
 
@@ -404,6 +434,18 @@ struct_items
 		  sdlagg.item->typespec = $2; }
 		field_opts
 		struct_items
+
+        | id usertypes
+                 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
+                   sdl_qstr2asc($2, &sdlagg.item->utype);
+                   sdlagg.item->typespec = SDL_K_TYPE_USER; }
+                field_opts
+                struct_items
+
+
+        | comment
+                { sdl_aggitem_rem ($1, &sdlagg.item); }
+                struct_items
 
 	;
 
@@ -442,6 +484,18 @@ union_items
 		  sdlagg.item->typespec = $2; }
 		field_opts
 		union_items
+
+	| id usertypes
+		 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
+		   sdl_qstr2asc($2, &sdlagg.item->utype);
+                   sdlagg.item->typespec = SDL_K_TYPE_USER; }
+                field_opts
+                union_items
+
+
+        | comment
+                { sdl_aggitem_rem ($1, &sdlagg.item); }
+                union_items
 
 	;
 
@@ -522,6 +576,17 @@ agg_items
 		field_opts
 		agg_items
 
+        | id usertypes
+                 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
+                   sdl_qstr2asc($2, &sdlagg.item->utype);
+                   sdlagg.item->typespec = SDL_K_TYPE_USER; }
+                field_opts
+                agg_items
+
+
+	| comment
+		{ sdl_agg_rem ($1, &sdlagg); }
+		agg_items
 	;
 
 
