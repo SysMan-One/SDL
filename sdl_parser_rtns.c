@@ -24,10 +24,28 @@
 #include	<stdio.h>
 #include	<fcntl.h>
 #include	<errno.h>
+#include	<ctype.h>
+
+#ifndef WIN32
+
 #include	<unistd.h>
 #include	<strings.h>
-#include	<ctype.h>
 #include	<sys/uio.h>
+
+#else
+
+#include	<WinSock2.h>
+#include	<Windows.h>
+
+
+#ifdef WIN32
+#define	strncasecmp	strnicmp
+#else
+
+#endif // WIN32
+
+#endif // !WIN32
+
 
 #include	"defsdl.h"
 
@@ -47,13 +65,6 @@ extern	int	trace;
 const	char remprefix [] = "\t//";
 
 
-int	zzstrcpy (char *src, char *dst)
-{
-	return	strcpy(dst, src);
-
-
-}
-
 unsigned long long sdl_hex2ull	(char *src)
 {
 unsigned long long ull = 0;
@@ -71,6 +82,35 @@ unsigned long long ull = 0;
 
 	return	ull;
 }
+
+#ifdef WIN32
+
+typedef struct iovec	{
+	char *	iov_base;
+	size_t	iov_len;
+} IOVEC;
+
+int	writev	(
+		HANDLE	 fd,
+		IOVEC	*iov,
+		int	 iocnt
+		)
+{
+int	status, len = 0;
+
+	for ( ;iocnt ; iocnt--, len += iov->iov_len)
+		{
+		if ( !WriteFile(fd, iov->iov_base, iov->iov_len, &status, NULL) )
+			{
+			$LOG(STS$K_ERROR, "WriteFile(), errno = %d", status = GetLastError() );
+			return	-status;
+			}
+		}
+
+	return	len;
+}
+
+#endif // WIN32
 
 
 int	sdl_const_rem	(
@@ -186,7 +226,7 @@ ASC *	a;
 
 
 /**
- * @brief sdl_qstr2asc - Copying quoted ASCIZ string (with conversion to lower case)
+ * @brief sdl_qstr2asc - Copying quoted ASCIZ string (with conversion to uper case)
  *	 to ASCIC container.
  *
  * @param src - A source quoted ASCIZ string
@@ -208,7 +248,7 @@ char	*cp = $ASCPTR(dst);
 
 	if ( !memchr(src, '"', len) )
 		{
-		while ( *(cp++) = (unsigned char) tolower(*(src++)) )
+		while ( *(cp++) = (unsigned char) toupper(*(src++)) )
 			$ASCLEN(dst)++;
 
 		return	$ASCLEN(dst);
@@ -402,7 +442,7 @@ const struct __tbl_types tbl_types [] = {
 	{SDL_K_TYPE_LONG, "l", "int "},
 	{SDL_K_TYPE_QUAD, "q", "long long "},
 	{SDL_K_TYPE_OCTA, "o", "quadword "},
-	{SDL_K_TYPE_BFLD, "v", "bitfield "},
+	{SDL_K_TYPE_BFLD, "v", "int unsigned "},
 	{SDL_K_TYPE_FLT, "f", "float "},
 	{SDL_K_TYPE_DBL, "d", "double "},
 	{SDL_K_TYPE_PCKD, "p", "packed "},
@@ -673,13 +713,13 @@ ASC	stack_tag[32];
 
 
 	/* Start of definition ... */
-	len = sprintf(buf, "\n#pragma	pack (push)\n" );
+	len = sprintf(buf, CRLF "#pragma	pack (push)" CRLF );
 
 	if ( agg->align == SDL_K_ALIGN_DEF )
-		len += sprintf(buf + len, "#pragma	pack\n");
-	else	len += sprintf(buf + len, "#pragma	pack %d\n", agg->align);
+		len += sprintf(buf + len, "#pragma	pack" CRLF);
+	else	len += sprintf(buf + len, "#pragma	pack %d" CRLF, agg->align);
 
-	len += sprintf(buf + len, "typedef	%s	__%.*s%.*s__ {%.*s\n",
+	len += sprintf(buf + len, "typedef	%s	__%.*s%.*s__ {%.*s" CRLF,
 		(agg->aggtype == SDL_K_AGGTYPE_STRUCT) ? "struct" : "union",
 		$ASC(&agg->pref), $ASC(&agg->id), $ASC(&agg->rem) );
 
@@ -702,7 +742,7 @@ ASC	stack_tag[32];
 			if ( (itm->itemtype == SDL_K_ITMTYPE_STRUCT) &&
 				(align = (agg->align != itm->align)) )
 				{
-				len = sprintf(buf, "#pragma	pack (push) /* begin-of-%.*s */\n#pragma	pack %d\n", $ASC(&itm->id), itm->align);
+				len = sprintf(buf, "#pragma	pack (push) /* begin-of-%.*s */\n#pragma	pack %d" CRLF, $ASC(&itm->id), itm->align);
 
 				if ( len != (status = write(sdlctx->fd, buf, len)) )
 					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
@@ -729,7 +769,7 @@ ASC	stack_tag[32];
 
 
 				if ( align )
-					len = sprintf(buf, "\n#pragma	pack (pop) /* end-of-%.*s */\n", $ASC(&itm->id));
+					len = sprintf(buf, CRLF "#pragma	pack (pop) /* end-of-%.*s */" CRLF, $ASC(&itm->id));
 
 				if ( len != (status = write(sdlctx->fd, buf, len)) )
 					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
@@ -784,8 +824,8 @@ ASC	stack_tag[32];
 	sdl_asc2up (&agg->id);
 	sdl_asc2up (&agg->pref);
 
-	len = sprintf(buf, "} %.*s%.*s;%.*s\n", $ASC(&agg->pref), $ASC(&agg->id), $ASC(&agg->rem) );
-	len += sprintf(buf + len, "#pragma	pack (pop)\n");
+	len = sprintf(buf, "} %.*s%.*s;%.*s" CRLF, $ASC(&agg->pref), $ASC(&agg->id), $ASC(&agg->rem) );
+	len += sprintf(buf + len, "#pragma	pack (pop)\n" CRLF);
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
 		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
@@ -937,6 +977,71 @@ SDL_VAR	*var = sdlctx->vars;
 	else	{
 		memcpy(value, $ASCPTR(&var->val_asc), $ASCLEN(&var->val_asc));
 		*(value + $ASCLEN(&var->val_asc)) = '\0';
+		}
+
+	return	STS$K_SUCCESS;
+}
+
+
+
+
+int	sdl_literal	(
+	SDL_LITERAL *	ltr,
+		char *	line
+			)
+{
+int	count, status;
+SDL_LTRITEM *li;
+
+	if ( !(li = calloc(1, sizeof(SDL_LTRITEM))) )
+		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_LTRITEM), errno);
+
+	$ASCLEN(&li->line) = (unsigned char) strnlen(line, ASC$K_SZ);
+	memcpy($ASCPTR(&li->line), line, $ASCLEN(&li->line) );
+
+	if ( !(1 & (status = $INSQTAIL(ltr, li, &count))) )
+		$LOG(status, "Error addition of the %s", line);
+
+	return	STS$K_SUCCESS;
+}
+
+
+int	sdl_def_literal	(
+		SDL_CTX *	sdlctx,
+		SDL_LITERAL *	ltr
+			)
+{
+int	len, status, count;
+SDL_LTRITEM *li;
+struct iovec iov [] = { {0, 0}, {CRLF, 2} };
+
+	while ( 1 & $REMQHEAD(ltr, &li, &count) )
+		{
+		if ( !count )
+			break;
+
+		iov[0].iov_len = $ASCLEN(&li->line);
+		iov[0].iov_base= $ASCPTR(&li->line);
+
+		$TRACE("'%.*s'", iov[0].iov_len, iov[0].iov_base);
+
+		{
+		char *cp = iov[0].iov_base + iov[0].iov_len;
+
+		for ( cp--; (status = isspace(*cp)) && (0 < iov[0].iov_len);
+		      cp--, iov[0].iov_len--);
+
+		}
+
+		len = iov[0].iov_len + iov[1].iov_len;
+
+		if ( len != (status = writev(sdlctx->fd, iov, $ARRSZ(iov))) )
+			{
+			$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+			break;
+			}
+
+		free(li);
 		}
 
 	return	STS$K_SUCCESS;

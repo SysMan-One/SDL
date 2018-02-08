@@ -13,6 +13,10 @@
 **
 **  MODIFICATION HISTORY:
 **
+**	07-FEB-2018	RRL	Changed comment line prefix from C-style: / * .... * / to
+**				one symbol prefix: 
+**				added LITERAL END_LITERAL keywords to designate copy as-is section to output file;
+**
 **--
 */
 
@@ -33,10 +37,13 @@
 #define		__TFAC__ __FAC__ ": "	/* Special prefix for $TRACE			*/
 #include	"utility_routines.h"
 
+
+extern int literal_state;
+
 }
 
 
-
+%option nounistd
 %option	bison-bridge
 %option	bison-locations
 
@@ -45,7 +52,10 @@
 %option	noyywrap
 %option	reentrant
 
+%option	verbose
+%option warn
 %option	debug
+
 %option	yylineno
 %option	case-insensitive
 %option	8bit
@@ -59,16 +69,29 @@ comment_string	("/*"|"{"|"!").*
 
 quoted_string	\"(\\.|[^"\\])*\"
 
-%s	module
+text_string	(^["end_literal"])(.*)[\n]
+
+%s		MODULE
+%x		LITERAL
 
 %%
+
+	if ( literal_state )
+		BEGIN(LITERAL);
 
 
 "module"	{ return	KWD_MODULE; }
 "ident"		{ return	KWD_IDENT; }
 "end_module"	{ return	KWD_END_MODULE; }
 
+
 "include"	{ return	KWD_INCLUDE; }
+
+
+"literal"	{ return	KWD_LITERAL; }
+<LITERAL>"end_literal"	{ BEGIN(literal_state = 0);		return	KWD_END_LITERAL; }
+<LITERAL>{text_string}	{ strncpy (yylval->tval, yytext, sizeof(yylval->tval)); return tline; }
+
 
 "byte"		{ return	KWD_BYTE; }
 "word"		{ return	KWD_WORD; }

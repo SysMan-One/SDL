@@ -1,5 +1,5 @@
 #define	__MODULE__	"SDL"
-#define	__IDENT__	"X.50-03"
+#define	__IDENT__	"X.50-04"
 
 /*
 **++
@@ -35,7 +35,10 @@
 **  CREATION DATE:  3-NOV-2017
 **
 **  MODIFICATION HISTORY:
+**
 **	23-NOV-2017	RRL	Added some comments.
+**
+**	 8-FEB-2018	RRL	Adaptation to compile under Windows
 **
 **
 **--
@@ -43,7 +46,10 @@
 
 #include	<stdio.h>
 #include	<errno.h>
+#ifndef WIN32
 #include	<unistd.h>
+#endif // !WIN32
+
 
 #include	"defsdl.h"
 
@@ -61,6 +67,8 @@
 #include	"sdl_parser.h"
 #include	"sdl_lexer.h"
 
+extern int literal_state;
+
 
 void	yyerror (
 	YYLTYPE *	locp,
@@ -68,8 +76,8 @@ void	yyerror (
 	char const *	msg
 		)
 {
-	$LOG(STS$K_ERROR, "[%d:%d] -> [%d:%d], %s", locp->first_line, locp->first_column,
-		locp->last_line, locp->last_column, msg);
+	$LOG(STS$K_ERROR, "[%d:%d] -> [%d:%d], literal_state = %d, %s", locp->first_line, locp->first_column,
+		locp->last_line, locp->last_column, literal_state, msg);
 }
 
 extern int yydebug;
@@ -90,6 +98,7 @@ FILE *	finp;
 	yylex_init(&scanner);
 	yyset_debug(1, scanner);
 	yydebug = 0;
+
 
 	yyset_in(finp, scanner);
 

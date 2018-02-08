@@ -15,6 +15,8 @@
 **
 **	05-FEB-2018	RRL	Added User defined field type, $BITOPT(22)
 **
+**	07-FEB-2018	RRL	Added literal section support
+**
 **--
 */
 
@@ -181,6 +183,21 @@ typedef struct	__sdl_aggregate__
 	int	aggtype,
 		align;
 } SDL_AGGREGATE;
+
+
+/* Structure to keep lines beetween LITERAL/END_LITERAL directives */
+typedef struct	__sdl_literal__
+{
+	QUEUE	list;
+
+} SDL_LITERAL;
+
+typedef struct	__sdl_ltritem__
+{
+	ENTRY	hdr;
+	ASC	line;
+
+} SDL_LTRITEM;
 
 
 typedef	struct	__sdl_module__

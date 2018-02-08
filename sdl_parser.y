@@ -7,9 +7,9 @@
 **	A general form of the SDL input looks like:
 **
 **	MODULE <id> IDENT <quoted_string> ;
-**	
+**
 **	CONSTANT <id> EQUALS <value> PREFIX <prefix> TAG <tag>;
-**	( will generate a constant definition : 
+**	( will generate a constant definition :
 **	#define <prefix>_$K_<tag>_<id>	<value>
 **	)
 **
@@ -36,20 +36,25 @@
 **  MODIFICATION HISTORY:
 **
 **	22-NOV-2017	RRL	Added KWD_MASK handling.
-**	
+**
 **	12-DEC-2017	RRL	Added BITFIELD/KWD_BFLD handling.
+**
+**	07-FEB-2018	RRL	Changed comment line prefix from C-style: / * .... * / to
+**				one symbol prefix: { or !;
+**				added LITERAL END_LITERAL keywords to designate a "copy as-is" section to output file;
 **
 **--
 */
 
 %define parse.error verbose
 %define api.pure true
+
 %locations
 %token-table
 %define parse.lac	full
 
 %verbose
-%define parse.trace true
+
 
 /*
 %glr-parser
@@ -63,7 +68,10 @@
 
 #include	<stdio.h>
 #include	<errno.h>
+
+#ifndef	WIN32
 #include	<unistd.h>
+#endif
 
 #include	"defsdl.h"
 #include	"utility_routines.h"
@@ -76,9 +84,11 @@ SDL_CTX	*	sdlctx = NULL;
 
 SDL_CONSTANT	sdlconst = {0};		/* Single CONSTANT definition	*/
 SDL_CONSTLIST	sdlconstlist = {0};	/* A list of CONSTANTS (...)	*/
+SDL_LITERAL	sdlliteral = {0};	/* A list of lines in the between LITERAL/END_LITERAL */
 
 SDL_AGGREGATE	sdlagg = {0};		/* AGGREGATE context area	*/
-SDL_AGGITEM	sdlaggitem = {0};	/* AGGREGATE's items contexts	*/
+
+int	literal_state = 0;
 
 %}
 
@@ -96,6 +106,8 @@ SDL_AGGITEM	sdlaggitem = {0};	/* AGGREGATE's items contexts	*/
 %token	KWD_IDENT		/* IDENT <ident>		*/
 %token	KWD_MODULE		/* MODULE <module> directive	*/
 %token	KWD_END_MODULE		/* END_MODULE			*/
+%token	KWD_LITERAL             /* LITERAL directive            */
+%token	KWD_END_LITERAL         /* END_LITERAL directive        */
 
 /*
 ** Keywords to form a resulting identifier name
@@ -152,6 +164,7 @@ SDL_AGGITEM	sdlaggitem = {0};	/* AGGREGATE's items contexts	*/
 
 %token	<tval>	id
 
+%token	<tval>	tline
 %token	<tval>	comment
 %token	<tval>	quoted_string	/* {tbs} */
 %token		EOL
@@ -175,7 +188,7 @@ prog	: %empty
 	| prog	error
 	;
 
-		
+
 line	: %empty
 	| comment
 		{ sdl_comment(sdlctx, $1); }
@@ -184,7 +197,8 @@ line	: %empty
 	| aggregate
 	| constant
 	| varset
-	;			
+	| literal
+	;
 
 
 varset	: sdlvar KWD_EQ quoted_string { sdl_var_set(sdlctx, $1, $3, SDL_K_VARTYPE_STR); }
@@ -193,16 +207,27 @@ varset	: sdlvar KWD_EQ quoted_string { sdl_var_set(sdlctx, $1, $3, SDL_K_VARTYPE
 	| sdlvar KWD_EQ value { sdl_var_set(sdlctx, $1, $3, SDL_K_VARTYPE_NUM); }
 		EOL
 	;
+
+
+literal	: KWD_LITERAL EOL
+		{ literal_state = 1; }
+		literal
+
+	| tline
+		{ sdl_literal(&sdlliteral, $1); }
+		literal
+
+	| KWD_END_LITERAL EOL
+		{ sdl_def_literal(sdlctx, &sdlliteral); 
+		  literal_state = 0; }
+	;
 	
-
-
-
 
 module	: KWD_MODULE id KWD_IDENT quoted_string EOL
 		{ sdl_module (&sdlctx, $2, $4); }
 	;
 
-end_module	
+end_module
 	: KWD_END_MODULE EOL
 		{ sdl_end_module (sdlctx, sdlctx->module); }
 	;
@@ -211,17 +236,17 @@ end_module
 value	: sdlvar	{ sdl_var_get(sdlctx, $1, &$$, SDL_K_VARTYPE_NUM); }
 
 	| decimal	{ $$ = $1; }	/* Immediate value: 11, %d42343 ...		*/
-	| hexadecimal	{ $$ = sdl_hex2ull ($1); } 
-	| octal		{ $$ = sdl_oct2ull ($1); } 
+	| hexadecimal	{ $$ = sdl_hex2ull ($1); }
+	| octal		{ $$ = sdl_oct2ull ($1); }
 	;
 
 
-tag	: KWD_TAG quoted_string 
-		{ strcpy($$, $2); } 
+tag	: KWD_TAG quoted_string
+		{ strcpy($$, $2); }
 	;
 
 pref	: KWD_PREFIX quoted_string
-		{ strcpy($$, $2); } 
+		{ strcpy($$, $2); }
 	;
 
 inc	: KWD_INC value
@@ -236,7 +261,7 @@ sizespec
 		{ $$ = $2; }
 	;
 
-signspec	
+signspec
 	: KWD_SIGNED
 		{ $$ = SDL_K_TYPE_SGND; }
 	| KWD_UNSIGNED
@@ -249,7 +274,7 @@ basetypes
 		{ $$ = SDL_K_TYPE_PTR; }
 	| KWD_BYTE
 		{ $$ = SDL_K_TYPE_BYTE; }
-	| KWD_WORD 
+	| KWD_WORD
 		{ $$ = SDL_K_TYPE_WORD; }
 	| KWD_LONG
 		{ $$ = SDL_K_TYPE_LONG; }
@@ -290,8 +315,8 @@ syntypes
 	;
 
 usertypes
-	: id 
-		{ zzstrcpy ($$, $1); }
+	: id
+		{ strcpy ($$, $1); }
 	;
 
 align	: KWD_ALIGN
@@ -331,9 +356,9 @@ aggtypes
 
 constant_opts
 	: %empty
-	| pref	{ sdl_str2asc ( $1, &sdlconst.pref); } 
+	| pref	{ sdl_str2asc ( $1, &sdlconst.pref); }
 			constant_opts
-	| tag	{ sdl_qstr2asc ($1,  &sdlconst.tag); } 
+	| tag	{ sdl_qstr2asc ($1,  &sdlconst.tag); }
 			constant_opts
 	| KWD_MASK
 		{ sdlconst.mask = SDL_K_TYPE_MASK; }
@@ -344,10 +369,10 @@ constant_opts
 
 constlist_opts
 	: %empty
-	| pref	{ sdl_qstr2asc ( $1, &sdlconstlist.pref); } 
+	| pref	{ sdl_qstr2asc ( $1, &sdlconstlist.pref); }
 			constlist_opts
 
-	| tag	{ sdl_qstr2asc ( $1, &sdlconstlist.tag); } 
+	| tag	{ sdl_qstr2asc ( $1, &sdlconstlist.tag); }
 			constlist_opts
 
 	| inc
@@ -368,29 +393,29 @@ constlist_opts
 constlist_ids
 	: %empty
 	| id KWD_EQ value
-                { sdl_constlist( &sdlconstlist, $1, $3, 1); }
-                        constlist_ids
+		{ sdl_constlist( &sdlconstlist, $1, $3, 1); }
+			constlist_ids
 
-	| id 
+	| id
 		{ sdl_constlist( &sdlconstlist, $1, 0, 0); }
 			constlist_ids
-	
-	| COMMA comment 
+
+	| COMMA comment
 		{ sdl_constlist_rem ($2, &sdlconstlist); }
 			constlist_ids
 
 	| comment
-                { sdl_constlist_rem ($1, &sdlconstlist); }
-                        constlist_ids
+		{ sdl_constlist_rem ($1, &sdlconstlist); }
+			constlist_ids
 
 	| COMMA constlist_ids
 
 	| CLOSE_LIST
-	;		
+	;
 
 constant
 	: %empty
-	| KWD_CONST OPEN_LIST constlist_ids KWD_EQ value 
+	| KWD_CONST OPEN_LIST constlist_ids KWD_EQ value
 			{ sdlconstlist.val = $5; }
 			constlist_opts
 
@@ -403,7 +428,7 @@ constant
 
 
 
-struct_items 
+struct_items
 	: %empty
 
 	| KWD_END id EOL
@@ -435,17 +460,17 @@ struct_items
 		field_opts
 		struct_items
 
-        | id usertypes
-                 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
-                   sdl_qstr2asc($2, &sdlagg.item->utype);
-                   sdlagg.item->typespec = SDL_K_TYPE_USER; }
-                field_opts
-                struct_items
+	| id usertypes
+		 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
+		   sdl_qstr2asc($2, &sdlagg.item->utype);
+		   sdlagg.item->typespec = SDL_K_TYPE_USER; }
+		field_opts
+		struct_items
 
 
-        | comment
-                { sdl_aggitem_rem ($1, &sdlagg.item); }
-                struct_items
+	| comment
+		{ sdl_aggitem_rem ($1, &sdlagg.item); }
+		struct_items
 
 	;
 
@@ -453,7 +478,7 @@ struct_items
 
 /*	UNION <id> [PREFIX <pref> [TAG <tag]]
 */
-union_items 
+union_items
 	: %empty
 
 	| KWD_END id EOL
@@ -488,14 +513,14 @@ union_items
 	| id usertypes
 		 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
 		   sdl_qstr2asc($2, &sdlagg.item->utype);
-                   sdlagg.item->typespec = SDL_K_TYPE_USER; }
-                field_opts
-                union_items
+		   sdlagg.item->typespec = SDL_K_TYPE_USER; }
+		field_opts
+		union_items
 
 
-        | comment
-                { sdl_aggitem_rem ($1, &sdlagg.item); }
-                union_items
+	| comment
+		{ sdl_aggitem_rem ($1, &sdlagg.item); }
+		union_items
 
 	;
 
@@ -545,7 +570,7 @@ field_opts
 
 
 
-agg_items 
+agg_items
 	: %empty
 
 	| KWD_END id EOL
@@ -553,13 +578,13 @@ agg_items
 
 	| id KWD_STRUCT
 		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_STRUCT); }
-		struct_opts 
+		struct_opts
 		struct_items
 		agg_items
 
 	| id KWD_UNION
 		{ sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_UNION); }
-		union_opts 
+		union_opts
 		union_items
 		agg_items
 
@@ -576,12 +601,12 @@ agg_items
 		field_opts
 		agg_items
 
-        | id usertypes
-                 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
-                   sdl_qstr2asc($2, &sdlagg.item->utype);
-                   sdlagg.item->typespec = SDL_K_TYPE_USER; }
-                field_opts
-                agg_items
+	| id usertypes
+		 { sdl_aggitem_add(&sdlagg, $1, SDL_K_ITMTYPE_FIELD);
+		   sdl_qstr2asc($2, &sdlagg.item->utype);
+		   sdlagg.item->typespec = SDL_K_TYPE_USER; }
+		field_opts
+		agg_items
 
 
 	| comment
@@ -610,7 +635,7 @@ agg_opts
 	;
 
 aggregate
-	: KWD_AGGREGATE id 
+	: KWD_AGGREGATE id
 		{ sdl_agg_init (&sdlagg, $2); }
 			agg_opts
 			agg_items
