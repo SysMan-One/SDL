@@ -1,11 +1,4 @@
-#
-#   Abstract: SDL - is a Structure Definition Langguage
-#
-#   Author: Ruslan R. Laishev
-#
-#
-
-A portable processor for Structure Definition Language (a child of the OpenVMS SDL)
+#SDL - A portable processor for Structure Definition Language (a child of the OpenVMS SDL)
 
 A short description of the language follows:
 
