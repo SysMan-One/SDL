@@ -1,5 +1,5 @@
 #define	__MODULE__	"SDL_ACTRTN"
-#define	__IDENT__	"X.50-03"
+#define	__IDENT__	"X.50-04"
 
 /*
 **++
@@ -17,6 +17,8 @@
 **	22-NOV-2017	RRL	Added handling of the ALIGN attribute of the structure/union
 **
 **	 6-DEC-2017	RRL	Added action routines to get/set SDL's variables.
+**
+**	12-OCT-2018	RRL	Replace sscanf() with strtoull()
 **
 **--
 */
@@ -52,10 +54,6 @@
 /*
 * Defines and includes for enable extend trace and logging
 */
-#ifdef _DEBUG
-	#define	__TRACE__	1
-#endif // _DEBUG
-
 #define		__FAC__	"SDL"		/* Enable empty FAC prefix			*/
 #define		__TFAC__ __FAC__ ": "	/* Special prefix for $TRACE			*/
 #include	"utility_routines.h"
@@ -67,20 +65,16 @@ const	char remprefix [] = "\t//";
 
 unsigned long long sdl_hex2ull	(char *src)
 {
-unsigned long long ull = 0;
+char	*endptr;
 
-	sscanf(src, "%x", &ull);
-
-	return	ull;
+	return	 strtoull(src, &endptr, 16);
 }
 
 unsigned long long sdl_oct2ull	(char *src)
 {
-unsigned long long ull = 0;
+char	*endptr;
 
-	sscanf(src, "%o", &ull);
-
-	return	ull;
+	return	 strtoull(src, &endptr, 8);
 }
 
 #ifdef WIN32
@@ -102,7 +96,7 @@ int	status, len = 0;
 		{
 		if ( !WriteFile(fd, iov->iov_base, iov->iov_len, &status, NULL) )
 			{
-			$LOG(STS$K_ERROR, "WriteFile(), errno = %d", status = GetLastError() );
+			$LOG(STS$K_ERROR, "WriteFile(), errno=%d", status = GetLastError() );
 			return	-status;
 			}
 		}
@@ -340,7 +334,7 @@ int	len, status;
 		"#endif /* __%s_LOADED */" CRLF, $ASCPTR(&sdlctx->module));
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
-		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+		return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 
 	close(sdlctx->fd);
 	free(sdlctx);
@@ -358,11 +352,12 @@ int	sdl_module	(
 char	buf[8192];
 int	len, status;
 SDL_CTX * ctx;
+struct	tm	_tm = {0};
 
 	$TRACE("Module: %s, IDENT: %s", modname, ident);
 
 	if ( !(ctx = calloc(1, sizeof(SDL_CTX))))
-		return	$LOG(STS$K_FATAL, "Insufficient memory, errno = %d", errno);
+		return	$LOG(STS$K_FATAL, "Insufficient memory, errno=%d", errno);
 
 	ctx->fd = -1;
 	$ASCLEN( &ctx->ext) = len = 1;
@@ -374,33 +369,54 @@ SDL_CTX * ctx;
 	if ( 0 < ctx->fd )
 		{
 		$LOG(STS$K_FATAL, "MODULE %.*s has not been closed by END_MODULE directive", $ASC( &ctx->module) );
-		return	$LOG(STS$K_FATAL, "Cannot start MODULE %s (IDENT %s) processing", modname, ident);
+		return	$LOG(STS$K_FATAL, "Cannot start processing of MODULE %s (IDENT %s)", modname, ident);
 		}
 
 	/* Open a file to store generated definitions */
 	if ( 0 > (ctx->fd = open(buf, O_WRONLY | O_TRUNC | O_CREAT)) )
-		return	$LOG(STS$K_FATAL, "Cannot create output %s, errno = %d", buf, errno);
+		return	$LOG(STS$K_FATAL, "Cannot create output %s, errno=%d", buf, errno);
 
 	/* Save module name */
 	$ASCLEN( &ctx->module) = (unsigned char) strnlen( modname, ASC$K_SZ );
 	memcpy( $ASCPTR( &ctx->module), modname, $ASCLEN( &ctx->module) );
 
 	/* Generate and write to file a module's header, and .H preamble */
-	len = sprintf(buf,
-		"/*** MODULE %s IDENT %s ***/" CRLF \
-		"#ifndef __%s_LOADED" CRLF \
-		"#define __%s_LOADED 1" CRLF, modname, ident ? ident : "X.00-00", modname, modname);
+	len = sprintf (buf,
+		"/*" CRLF \
+		"**++" CRLF);
 
 	len += sprintf(buf + len,
+		"**  MODULE: %s IDENT %s" CRLF "**" CRLF,
+		      modname, ident ? ident : "X.00-00", modname, modname);
+
+	__util$timbuf(NULL /* Now */, &_tm);
+
+	len += sprintf (buf + len,
+		"**  CREATION DATE:  %02u-%02u-%04u %02u:%02u:%02u" CRLF "**" CRLF,
+			_tm.tm_mday, _tm.tm_mon, _tm.tm_year,
+			_tm.tm_hour, _tm.tm_min, _tm.tm_sec);
+
+	len += sprintf (buf + len,
+		"**  PRODUCED BY:  StarLet SDL " __IDENT__ CRLF);
+
+
+	len += sprintf (buf + len,
+		"**--" CRLF \
+		"*/" CRLF);
+
+	len += sprintf(buf + len,
+		"#ifndef __%s_LOADED" CRLF \
+		"#define __%s_LOADED 1" CRLF \
+		CRLF CRLF \
 		"#pragma	pack (push)" CRLF \
 		"#pragma	pack" CRLF \
 		CRLF \
 		"#ifdef __cplusplus" CRLF \
 		"	extern \"C\" {" CRLF \
-		"#endif" CRLF CRLF CRLF);
+		"#endif" CRLF CRLF CRLF, modname,  modname);
 
 	if ( len != (status = write(ctx->fd, buf, len)) )
-		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+		return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 
 	*sdlctx = ctx;
 
@@ -548,7 +564,7 @@ int	len, status;
 	len = status;
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
-		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+		return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 }
 
 
@@ -563,7 +579,7 @@ int	count, status;
 SDL_CONSTITEM *ci;
 
 	if ( !(ci = calloc(1, sizeof(SDL_CONSTITEM))) )
-		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_CONSTITEM), errno);
+		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno=%d", sizeof(SDL_CONSTITEM), errno);
 
 	$ASCLEN(&ci->id) = (unsigned char) strnlen(id, ASC$K_SZ);
 	memcpy($ASCPTR(&ci->id), id, $ASCLEN(&ci->id) );
@@ -624,7 +640,7 @@ struct iovec iov [] = { {buf, 0}, {CRLF, 2} };
 
 		if ( len != (status = writev(sdlctx->fd, iov, 2)) )
 			{
-			$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+			$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 			break;
 			}
 
@@ -671,7 +687,7 @@ int	status, count;
 SDL_AGGITEM * itm;
 
 	if ( !(itm = calloc(1, sizeof(SDL_AGGITEM))) )
-		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_AGGITEM), errno);
+		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno=%d", sizeof(SDL_AGGITEM), errno);
 
 	sdl_str2asc(id, &itm->id);
 
@@ -724,7 +740,7 @@ ASC	stack_tag[32];
 		$ASC(&agg->pref), $ASC(&agg->id), $ASC(&agg->rem) );
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
-		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+		return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 
 
 	while ( 1 & $REMQHEAD(&agg->list, &itm, &count) )
@@ -745,7 +761,7 @@ ASC	stack_tag[32];
 				len = sprintf(buf, "#pragma	pack (push) /* begin-of-%.*s */\n#pragma	pack %d" CRLF, $ASC(&itm->id), itm->align);
 
 				if ( len != (status = write(sdlctx->fd, buf, len)) )
-					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+					return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 				}
 
 			iov[1].iov_len = sprintf(buf , "%s /* %.*s */ {%.*s",
@@ -753,7 +769,7 @@ ASC	stack_tag[32];
 				      $ASC(&itm->id), $ASC(&itm->rem));
 
 			if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
-				return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+				return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 
 			deeplvl++;
 			stack_tag[deeplvl] = itm->tag;
@@ -765,14 +781,14 @@ ASC	stack_tag[32];
 				iov[1].iov_len = sprintf(buf, "} %.*s;%.*s", $ASC(&itm->id), $ASC(&itm->rem));
 
 				if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
-					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+					return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 
 
 				if ( align )
 					len = sprintf(buf, CRLF "#pragma	pack (pop) /* end-of-%.*s */" CRLF, $ASC(&itm->id));
 
 				if ( len != (status = write(sdlctx->fd, buf, len)) )
-					return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+					return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 
 
 				deeplvl--;
@@ -811,7 +827,7 @@ ASC	stack_tag[32];
 
 			if ( 0 > (status = writev(sdlctx->fd, iov, 3)) )
 				{
-				$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+				$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 				break;
 				}
 			}
@@ -828,7 +844,7 @@ ASC	stack_tag[32];
 	len += sprintf(buf + len, "#pragma	pack (pop)\n" CRLF);
 
 	if ( len != (status = write(sdlctx->fd, buf, len)) )
-		return	$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+		return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 
 
 	/* Reset AGGREGATE context area */
@@ -853,7 +869,7 @@ struct iovec iov [] = { {"//" , 2}, {comment + 1, 0}, {CRLF, 2} };
 	iov[1].iov_len;
 
 	if ( 0 > (status = writev(sdlctx->fd, iov, $ARRSZ(iov))) )
-		return	$LOG(STS$K_FATAL, "write() -> %d, errno = %d", status, errno);
+		return	$LOG(STS$K_FATAL, "write()->%d, errno=%d", status, errno);
 
 	return	STS$K_SUCCESS;
 }
@@ -895,7 +911,7 @@ SDL_VAR	*var = sdlctx->vars;
 		{
 		/* Allocate a memory for new variable */
 		if ( !(var = calloc(1, sizeof(SDL_VAR))) )
-			return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_VAR), errno);
+			return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno=%d", sizeof(SDL_VAR), errno);
 
 		/* Preset Id and Type */
 		$ASCLEN(&var->id) = len;
@@ -994,7 +1010,7 @@ int	count, status;
 SDL_LTRITEM *li;
 
 	if ( !(li = calloc(1, sizeof(SDL_LTRITEM))) )
-		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno = %d", sizeof(SDL_LTRITEM), errno);
+		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno=%d", sizeof(SDL_LTRITEM), errno);
 
 	$ASCLEN(&li->line) = (unsigned char) strnlen(line, ASC$K_SZ);
 	memcpy($ASCPTR(&li->line), line, $ASCLEN(&li->line) );
@@ -1037,7 +1053,7 @@ struct iovec iov [] = { {0, 0}, {CRLF, 2} };
 
 		if ( len != (status = writev(sdlctx->fd, iov, $ARRSZ(iov))) )
 			{
-			$LOG(STS$K_FATAL, "write(%d octets) -> %d, errno = %d", len, status, errno);
+			$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
 			break;
 			}
 

@@ -17,6 +17,8 @@
 **				one symbol prefix: 
 **				added LITERAL END_LITERAL keywords to designate copy as-is section to output file;
 **
+**	17-OCT-2018	SYS	Resolved a problem with processing literal/end_literal.
+**
 **--
 */
 
@@ -49,8 +51,7 @@ extern int literal_state;
 
 %option	ecs
 
-%option	noyywrap
-%option	reentrant
+%option reentrant stack noyywrap
 
 %option	verbose
 %option warn
@@ -69,7 +70,9 @@ comment_string	("/*"|"{"|"!").*
 
 quoted_string	\"(\\.|[^"\\])*\"
 
-text_string	(^["end_literal"])(.*)[\n]
+/* text_string	(^["end_literal"])(.*)[\n] */
+end_literal	"e"+"n"+"d"+"_"+"l"+"i"+"t"+"e"+"r"+"a"+"l"
+text_string	(.*)[\n]
 
 %s		MODULE
 %x		LITERAL
@@ -80,17 +83,26 @@ text_string	(^["end_literal"])(.*)[\n]
 		BEGIN(LITERAL);
 
 
-"module"	{ return	KWD_MODULE; }
-"ident"		{ return	KWD_IDENT; }
-"end_module"	{ return	KWD_END_MODULE; }
+"module"	{ return KWD_MODULE; }
+"ident"		{ return KWD_IDENT; }
+"end_module"	{ return KWD_END_MODULE; }
+"include"	{ return KWD_INCLUDE; }
 
+"literal"	{ return KWD_LITERAL; }
 
-"include"	{ return	KWD_INCLUDE; }
-
-
-"literal"	{ return	KWD_LITERAL; }
-<LITERAL>"end_literal"	{ BEGIN(literal_state = 0);		return	KWD_END_LITERAL; }
-<LITERAL>{text_string}	{ strncpy (yylval->tval, yytext, sizeof(yylval->tval)); return tline; }
+<LITERAL>"end_literal"	{ literal_state = 0; return KWD_END_LITERAL; }
+<LITERAL>(.*)[\n]	{ 
+			if ( !strncasecmp(yytext, "end_literal",  11) )
+				{
+				literal_state = 0;
+				BEGIN(0);
+				return	KWD_END_LITERAL;
+				}
+			else	{
+				strncpy (yylval->tval, yytext, sizeof(yylval->tval)); 
+				return tline; 
+				}
+			}
 
 
 "byte"		{ return	KWD_BYTE; }

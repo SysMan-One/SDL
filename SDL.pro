@@ -6,13 +6,15 @@ CONFIG += debug_and_release
 CONFIG += static
 
 SOURCES += \
-    sdl_main.c \
-    sdl_lexer.c \
-    sdl_parser.c \
-    ../SecurityCode/vCloud/utility_routines.c \
-    sdl_parser_rtns.c
+	sdl_main.c \
+	sdl_lexer.c \
+	sdl_parser.c \
+	sdl_parser_rtns.c \
+	../SecurityCode/vCloud/utility_routines.c \
+	../CLI/cli_routines.c
 
 INCLUDEPATH	+=./
+INCLUDEPATH	+=../CLI/
 INCLUDEPATH	+=../SecurityCode/vCloud/
 INCLUDEPATH	+=../
 INCLUDEPATH	+=../SDL-bin/

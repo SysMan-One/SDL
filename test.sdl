@@ -1,0 +1,98 @@
+/*++
+/*  Abstract: IVP/Test module for the StarLet SDL processor.
+/*
+/*  Author: Ruslan R. Laishev
+/*
+/*  Creation date: 22-NOV-2017
+/*
+/*--
+
+
+
+module	def2	
+	ident	"X.00-01";
+
+
+
+#numvar = 12345;
+#strvar = "123456";
+
+
+
+#numvar2 = #numvar;
+
+
+
+/*++
+/*  Abstract: Structure and constant definitions
+/*
+/*  Author: Ruslan R. Laishev
+/*
+/*  Creation date: 22-NOV-2017
+/*
+/*--
+
+
+
+
+
+/* A constant MYCONSTANT = 123
+constant myconst equals 123 prefix "mypref$" tag "mytag$";
+
+
+constant (
+	add,
+	set,
+	mod = 146,
+	del
+	) equals 135 increment 3 prefix "SDL" tag "option"
+		radix hex;
+
+
+aggregate pdu structure prefix "WIRE$" tag "pdu$" ALIGN OCTAWORD;
+
+	count	word unsigned;
+	payload	byte unsigned dimension 0;
+
+end pdu;
+
+
+
+
+
+AGGREGATE pdu2 STRUCTURE PREFIX "WIRE$" tag "tag$" ALIGN PAGE;
+
+	header	STRUCTURE TAG "header$" ALIGN OCTAWORD;
+		cmd	longword unsigned;
+		len	word unsigned;
+
+		opts	STRUCTURE ALIGN LONGWORD TAG "opts_";
+
+			nopts	WORD UNSIGNED;
+			opts	LONGWORD UNSIGNED DIMENSION 32;
+
+		END opts;
+
+	end header;
+
+
+	count	word unsigned;
+	payload	byte unsigned dimension 0;
+
+	
+
+
+	trailer	UNION TAG "trailer$";
+		crc	longword unsigned;
+		pad	word unsigned;
+		
+
+	END trailer;
+
+END	pdu2;
+
+
+
+end_module;
+
+

@@ -209,10 +209,12 @@ typedef	struct	__sdl_module__
 
 typedef	struct __sdl_ctx__
 {
-	int	fd;
-	ASC	module;
-	ASC	ext;
-	SDL_VAR *vars;
+	int	fd,		/* Source .SDL file File descriptor	*/
+		opts;		/* Global SDL' processing options	*/
+	ASC	module,		/* Module name				*/
+		ext;		/* Extension				*/
+
+	SDL_VAR *vars;		/* SDL's run-time variables list	*/
 } SDL_CTX;
 
 #endif // __DEFSDL_H__

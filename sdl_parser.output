@@ -1,0 +1,4131 @@
+Nonterminals useless in grammar
+
+   aggtypes
+
+
+Terminals unused in grammar
+
+   KWD_INCLUDE
+
+
+Rules useless in grammar
+
+  173 aggtypes: KWD_STRUCT
+  174         | KWD_UNION
+
+
+Rules useless in parser due to conflicts
+
+   96 constant: %empty
+
+
+State 1 conflicts: 11 shift/reduce
+State 32 conflicts: 1 shift/reduce
+State 44 conflicts: 5 reduce/reduce
+State 61 conflicts: 1 shift/reduce
+State 129 conflicts: 1 shift/reduce
+State 167 conflicts: 3 shift/reduce
+State 171 conflicts: 3 shift/reduce
+State 179 conflicts: 1 shift/reduce
+State 180 conflicts: 1 shift/reduce
+State 181 conflicts: 1 shift/reduce
+State 193 conflicts: 1 shift/reduce
+State 199 conflicts: 1 shift/reduce
+State 216 conflicts: 3 shift/reduce
+State 226 conflicts: 3 shift/reduce
+State 244 conflicts: 1 shift/reduce
+State 245 conflicts: 1 shift/reduce
+State 246 conflicts: 3 shift/reduce
+State 247 conflicts: 3 shift/reduce
+State 248 conflicts: 3 shift/reduce
+State 249 conflicts: 1 shift/reduce
+State 250 conflicts: 1 shift/reduce
+State 251 conflicts: 3 shift/reduce
+State 252 conflicts: 3 shift/reduce
+State 253 conflicts: 3 shift/reduce
+
+
+Grammar
+
+    0 $accept: prog $end
+
+    1 prog: %empty
+    2     | prog line
+    3     | prog error
+
+    4 line: comment
+    5     | module
+    6     | end_module
+    7     | aggregate
+    8     | constant
+    9     | varset
+   10     | literal
+   11     | literal_line
+   12     | end_literal
+
+   13 $@1: %empty
+
+   14 varset: sdlvar KWD_EQ quoted_string $@1 EOL
+
+   15 $@2: %empty
+
+   16 varset: sdlvar KWD_EQ value $@2 EOL
+
+   17 literal_line: tline
+
+   18 literal: KWD_LITERAL EOL
+
+   19 end_literal: KWD_END_LITERAL
+
+   20 module: KWD_MODULE id KWD_IDENT quoted_string EOL
+
+   21 end_module: KWD_END_MODULE EOL
+
+   22 value: sdlvar
+   23      | decimal
+   24      | hexadecimal
+   25      | octal
+
+   26 tag: KWD_TAG quoted_string
+
+   27 pref: KWD_PREFIX quoted_string
+
+   28 inc: KWD_INC value
+
+   29 sizespec: KWD_LENGTH value
+   30         | KWD_DIMENSION value
+
+   31 signspec: KWD_SIGNED
+   32         | KWD_UNSIGNED
+
+   33 basetypes: KWD_PTR
+   34          | KWD_BYTE
+   35          | KWD_WORD
+   36          | KWD_LONG
+   37          | KWD_QUAD
+   38          | KWD_OCTA
+   39          | KWD_BFLD
+   40          | KWD_FLOAT
+   41          | KWD_DOUBLE
+
+   42 syntypes: KWD_PACKED
+   43         | KWD_ASCIC
+   44         | KWD_DESC
+   45         | KWD_HWADDR
+   46         | KWD_IPADDR
+   47         | KWD_IP4ADDR
+   48         | KWD_IP6ADDR
+   49         | KWD_SOCKET
+   50         | KWD_ENTRY
+   51         | KWD_VOID
+
+   52 usertypes: id
+
+   53 align: KWD_ALIGN
+   54      | KWD_NOALIGN
+   55      | KWD_ALIGN KWD_BYTE
+   56      | KWD_ALIGN KWD_WORD
+   57      | KWD_ALIGN KWD_LONG
+   58      | KWD_ALIGN KWD_QUAD
+   59      | KWD_ALIGN KWD_OCTA
+   60      | KWD_ALIGN KWD_PAGE
+
+   61 radix: KWD_RADIX KWD_DEC
+   62      | KWD_RADIX KWD_OCT
+   63      | KWD_RADIX KWD_BIN
+   64      | KWD_RADIX KWD_HEX
+
+   65 constant_opts: %empty
+
+   66 $@3: %empty
+
+   67 constant_opts: pref $@3 constant_opts
+
+   68 $@4: %empty
+
+   69 constant_opts: tag $@4 constant_opts
+
+   70 $@5: %empty
+
+   71 constant_opts: KWD_MASK $@5 constlist_opts
+   72              | EOL
+
+   73 constlist_opts: %empty
+
+   74 $@6: %empty
+
+   75 constlist_opts: pref $@6 constlist_opts
+
+   76 $@7: %empty
+
+   77 constlist_opts: tag $@7 constlist_opts
+
+   78 $@8: %empty
+
+   79 constlist_opts: inc $@8 constlist_opts
+
+   80 $@9: %empty
+
+   81 constlist_opts: radix $@9 constlist_opts
+
+   82 $@10: %empty
+
+   83 constlist_opts: KWD_MASK $@10 constlist_opts
+   84               | EOL
+
+   85 constlist_ids: %empty
+
+   86 $@11: %empty
+
+   87 constlist_ids: id KWD_EQ value $@11 constlist_ids
+
+   88 $@12: %empty
+
+   89 constlist_ids: id $@12 constlist_ids
+
+   90 $@13: %empty
+
+   91 constlist_ids: COMMA comment $@13 constlist_ids
+
+   92 $@14: %empty
+
+   93 constlist_ids: comment $@14 constlist_ids
+   94              | COMMA constlist_ids
+   95              | CLOSE_LIST
+
+   96 constant: %empty
+
+   97 $@15: %empty
+
+   98 constant: KWD_CONST OPEN_LIST constlist_ids KWD_EQ value $@15 constlist_opts
+
+   99 $@16: %empty
+
+  100 constant: KWD_CONST id KWD_EQ value $@16 constant_opts
+
+  101 struct_items: %empty
+  102             | KWD_END id EOL
+
+  103 $@17: %empty
+
+  104 struct_items: id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+
+  105 $@18: %empty
+
+  106 struct_items: id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+
+  107 $@19: %empty
+
+  108 struct_items: id basetypes $@19 field_opts struct_items
+
+  109 $@20: %empty
+
+  110 struct_items: id syntypes $@20 field_opts struct_items
+
+  111 $@21: %empty
+
+  112 struct_items: id usertypes $@21 field_opts struct_items
+
+  113 $@22: %empty
+
+  114 struct_items: comment $@22 struct_items
+
+  115 union_items: %empty
+  116            | KWD_END id EOL
+
+  117 $@23: %empty
+
+  118 union_items: id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+
+  119 $@24: %empty
+
+  120 union_items: id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+
+  121 $@25: %empty
+
+  122 union_items: id basetypes $@25 field_opts union_items
+
+  123 $@26: %empty
+
+  124 union_items: id syntypes $@26 field_opts union_items
+
+  125 $@27: %empty
+
+  126 union_items: id usertypes $@27 field_opts union_items
+
+  127 $@28: %empty
+
+  128 union_items: comment $@28 union_items
+
+  129 $@29: %empty
+
+  130 struct_opts: tag $@29 struct_opts
+
+  131 $@30: %empty
+
+  132 struct_opts: pref $@30 struct_opts
+
+  133 $@31: %empty
+
+  134 struct_opts: align $@31 struct_opts
+  135            | EOL
+
+  136 $@32: %empty
+
+  137 union_opts: tag $@32 union_opts
+
+  138 $@33: %empty
+
+  139 union_opts: pref $@33 union_opts
+  140           | EOL
+
+  141 $@34: %empty
+
+  142 field_opts: sizespec $@34 field_opts
+
+  143 $@35: %empty
+
+  144 field_opts: signspec $@35 field_opts
+  145           | EOL
+
+  146 agg_items: %empty
+  147          | KWD_END id EOL
+
+  148 $@36: %empty
+
+  149 agg_items: id KWD_STRUCT $@36 struct_opts struct_items agg_items
+
+  150 $@37: %empty
+
+  151 agg_items: id KWD_UNION $@37 union_opts union_items agg_items
+
+  152 $@38: %empty
+
+  153 agg_items: id basetypes $@38 field_opts agg_items
+
+  154 $@39: %empty
+
+  155 agg_items: id syntypes $@39 field_opts agg_items
+
+  156 $@40: %empty
+
+  157 agg_items: id usertypes $@40 field_opts agg_items
+
+  158 $@41: %empty
+
+  159 agg_items: comment $@41 agg_items
+
+  160 $@42: %empty
+
+  161 agg_opts: KWD_STRUCT $@42 agg_opts
+
+  162 $@43: %empty
+
+  163 agg_opts: KWD_UNION $@43 agg_opts
+
+  164 $@44: %empty
+
+  165 agg_opts: tag $@44 agg_opts
+
+  166 $@45: %empty
+
+  167 agg_opts: pref $@45 agg_opts
+
+  168 $@46: %empty
+
+  169 agg_opts: align $@46 agg_opts
+  170         | EOL
+
+  171 $@47: %empty
+
+  172 aggregate: KWD_AGGREGATE id $@47 agg_opts agg_items
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256) 3
+KWD_INCLUDE (258)
+KWD_IDENT (259) 20
+KWD_MODULE (260) 20
+KWD_END_MODULE (261) 21
+KWD_LITERAL (262) 18
+KWD_END_LITERAL (263) 19
+KWD_PREFIX (264) 27
+KWD_TAG (265) 26
+KWD_BYTE (266) 34 55
+KWD_WORD (267) 35 56
+KWD_LONG (268) 36 57
+KWD_QUAD (269) 37 58
+KWD_OCTA (270) 38 59
+KWD_BFLD (271) 39
+KWD_FLOAT (272) 40
+KWD_DOUBLE (273) 41
+KWD_PAGE (274) 60
+KWD_SIGNED (275) 31
+KWD_UNSIGNED (276) 32
+KWD_DIMENSION (277) 30
+KWD_LENGTH (278) 29
+KWD_PACKED (279) 42
+KWD_PTR (280) 33
+KWD_VOID (281) 51
+KWD_ENTRY (282) 50
+KWD_MASK (283) 71 83
+KWD_NOALIGN (284) 54
+KWD_ALIGN (285) 53 55 56 57 58 59 60
+KWD_ASCIC (286) 43
+KWD_DESC (287) 44
+KWD_HWADDR (288) 45
+KWD_IPADDR (289) 46
+KWD_IP4ADDR (290) 47
+KWD_IP6ADDR (291) 48
+KWD_SOCKET (292) 49
+KWD_CONST (293) 98 100
+KWD_EQ (294) 14 16 87 98 100
+KWD_INC (295) 28
+OPEN_LIST (296) 98
+COMMA (297) 91 94
+CLOSE_LIST (298) 95
+KWD_RADIX (299) 61 62 63 64
+KWD_DEC (300) 61
+KWD_HEX (301) 64
+KWD_OCT (302) 62
+KWD_BIN (303) 63
+KWD_AGGREGATE (304) 172
+KWD_STRUCT (305) 104 118 149 161
+KWD_UNION (306) 106 120 151 163
+KWD_END (307) 102 104 106 116 118 120 147
+sdlvar (308) 14 16 22
+decimal (309) 23
+hexadecimal (310) 24
+octal (311) 25
+id (312) 20 52 87 89 100 102 104 106 108 110 112 116 118 120 122 124
+    126 147 149 151 153 155 157 172
+tline (313) 17
+comment (314) 4 91 93 114 128 159
+quoted_string (315) 14 20 26 27
+EOL (316) 14 16 18 20 21 72 84 102 104 106 116 118 120 135 140 145
+    147 170
+
+
+Nonterminals, with rules where they appear
+
+$accept (62)
+    on left: 0
+prog (63)
+    on left: 1 2 3, on right: 0 2 3
+line (64)
+    on left: 4 5 6 7 8 9 10 11 12, on right: 2
+varset (65)
+    on left: 14 16, on right: 9
+$@1 (66)
+    on left: 13, on right: 14
+$@2 (67)
+    on left: 15, on right: 16
+literal_line (68)
+    on left: 17, on right: 11
+literal (69)
+    on left: 18, on right: 10
+end_literal (70)
+    on left: 19, on right: 12
+module (71)
+    on left: 20, on right: 5
+end_module (72)
+    on left: 21, on right: 6
+value (73)
+    on left: 22 23 24 25, on right: 16 28 29 30 87 98 100
+tag (74)
+    on left: 26, on right: 69 77 130 137 165
+pref (75)
+    on left: 27, on right: 67 75 132 139 167
+inc (76)
+    on left: 28, on right: 79
+sizespec (77)
+    on left: 29 30, on right: 142
+signspec (78)
+    on left: 31 32, on right: 144
+basetypes (79)
+    on left: 33 34 35 36 37 38 39 40 41, on right: 108 122 153
+syntypes (80)
+    on left: 42 43 44 45 46 47 48 49 50 51, on right: 110 124 155
+usertypes (81)
+    on left: 52, on right: 112 126 157
+align (82)
+    on left: 53 54 55 56 57 58 59 60, on right: 134 169
+radix (83)
+    on left: 61 62 63 64, on right: 81
+constant_opts (84)
+    on left: 65 67 69 71 72, on right: 67 69 100
+$@3 (85)
+    on left: 66, on right: 67
+$@4 (86)
+    on left: 68, on right: 69
+$@5 (87)
+    on left: 70, on right: 71
+constlist_opts (88)
+    on left: 73 75 77 79 81 83 84, on right: 71 75 77 79 81 83 98
+$@6 (89)
+    on left: 74, on right: 75
+$@7 (90)
+    on left: 76, on right: 77
+$@8 (91)
+    on left: 78, on right: 79
+$@9 (92)
+    on left: 80, on right: 81
+$@10 (93)
+    on left: 82, on right: 83
+constlist_ids (94)
+    on left: 85 87 89 91 93 94 95, on right: 87 89 91 93 94 98
+$@11 (95)
+    on left: 86, on right: 87
+$@12 (96)
+    on left: 88, on right: 89
+$@13 (97)
+    on left: 90, on right: 91
+$@14 (98)
+    on left: 92, on right: 93
+constant (99)
+    on left: 96 98 100, on right: 8
+$@15 (100)
+    on left: 97, on right: 98
+$@16 (101)
+    on left: 99, on right: 100
+struct_items (102)
+    on left: 101 102 104 106 108 110 112 114, on right: 104 108 110
+    112 114 118 149
+$@17 (103)
+    on left: 103, on right: 104
+$@18 (104)
+    on left: 105, on right: 106
+$@19 (105)
+    on left: 107, on right: 108
+$@20 (106)
+    on left: 109, on right: 110
+$@21 (107)
+    on left: 111, on right: 112
+$@22 (108)
+    on left: 113, on right: 114
+union_items (109)
+    on left: 115 116 118 120 122 124 126 128, on right: 106 120 122
+    124 126 128 151
+$@23 (110)
+    on left: 117, on right: 118
+$@24 (111)
+    on left: 119, on right: 120
+$@25 (112)
+    on left: 121, on right: 122
+$@26 (113)
+    on left: 123, on right: 124
+$@27 (114)
+    on left: 125, on right: 126
+$@28 (115)
+    on left: 127, on right: 128
+struct_opts (116)
+    on left: 130 132 134 135, on right: 104 118 130 132 134 149
+$@29 (117)
+    on left: 129, on right: 130
+$@30 (118)
+    on left: 131, on right: 132
+$@31 (119)
+    on left: 133, on right: 134
+union_opts (120)
+    on left: 137 139 140, on right: 106 120 137 139 151
+$@32 (121)
+    on left: 136, on right: 137
+$@33 (122)
+    on left: 138, on right: 139
+field_opts (123)
+    on left: 142 144 145, on right: 108 110 112 122 124 126 142 144
+    153 155 157
+$@34 (124)
+    on left: 141, on right: 142
+$@35 (125)
+    on left: 143, on right: 144
+agg_items (126)
+    on left: 146 147 149 151 153 155 157 159, on right: 149 151 153
+    155 157 159 172
+$@36 (127)
+    on left: 148, on right: 149
+$@37 (128)
+    on left: 150, on right: 151
+$@38 (129)
+    on left: 152, on right: 153
+$@39 (130)
+    on left: 154, on right: 155
+$@40 (131)
+    on left: 156, on right: 157
+$@41 (132)
+    on left: 158, on right: 159
+agg_opts (133)
+    on left: 161 163 165 167 169 170, on right: 161 163 165 167 169
+    172
+$@42 (134)
+    on left: 160, on right: 161
+$@43 (135)
+    on left: 162, on right: 163
+$@44 (136)
+    on left: 164, on right: 165
+$@45 (137)
+    on left: 166, on right: 167
+$@46 (138)
+    on left: 168, on right: 169
+aggregate (139)
+    on left: 172, on right: 7
+$@47 (140)
+    on left: 171, on right: 172
+
+
+State 0
+
+    0 $accept: . prog $end
+    1 prog: . %empty
+    2     | . prog line
+    3     | . prog error
+
+    $default  reduce using rule 1 (prog)
+
+    prog  go to state 1
+
+
+State 1
+
+    0 $accept: prog . $end
+    2 prog: prog . line
+    3     | prog . error
+    4 line: . comment
+    5     | . module
+    6     | . end_module
+    7     | . aggregate
+    8     | . constant
+    9     | . varset
+   10     | . literal
+   11     | . literal_line
+   12     | . end_literal
+   14 varset: . sdlvar KWD_EQ quoted_string $@1 EOL
+   16       | . sdlvar KWD_EQ value $@2 EOL
+   17 literal_line: . tline
+   18 literal: . KWD_LITERAL EOL
+   19 end_literal: . KWD_END_LITERAL
+   20 module: . KWD_MODULE id KWD_IDENT quoted_string EOL
+   21 end_module: . KWD_END_MODULE EOL
+   96 constant: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   98         | . KWD_CONST OPEN_LIST constlist_ids KWD_EQ value $@15 constlist_opts
+  100         | . KWD_CONST id KWD_EQ value $@16 constant_opts
+  172 aggregate: . KWD_AGGREGATE id $@47 agg_opts agg_items
+
+    $end             shift, and go to state 2
+    error            shift, and go to state 3
+    KWD_MODULE       shift, and go to state 4
+    KWD_END_MODULE   shift, and go to state 5
+    KWD_LITERAL      shift, and go to state 6
+    KWD_END_LITERAL  shift, and go to state 7
+    KWD_CONST        shift, and go to state 8
+    KWD_AGGREGATE    shift, and go to state 9
+    sdlvar           shift, and go to state 10
+    tline            shift, and go to state 11
+    comment          shift, and go to state 12
+
+    $end             [reduce using rule 96 (constant)]
+    error            [reduce using rule 96 (constant)]
+    KWD_MODULE       [reduce using rule 96 (constant)]
+    KWD_END_MODULE   [reduce using rule 96 (constant)]
+    KWD_LITERAL      [reduce using rule 96 (constant)]
+    KWD_END_LITERAL  [reduce using rule 96 (constant)]
+    KWD_CONST        [reduce using rule 96 (constant)]
+    KWD_AGGREGATE    [reduce using rule 96 (constant)]
+    sdlvar           [reduce using rule 96 (constant)]
+    tline            [reduce using rule 96 (constant)]
+    comment          [reduce using rule 96 (constant)]
+
+    line          go to state 13
+    varset        go to state 14
+    literal_line  go to state 15
+    literal       go to state 16
+    end_literal   go to state 17
+    module        go to state 18
+    end_module    go to state 19
+    constant      go to state 20
+    aggregate     go to state 21
+
+
+State 2
+
+    0 $accept: prog $end .
+
+    $default  accept
+
+
+State 3
+
+    3 prog: prog error .
+
+    $default  reduce using rule 3 (prog)
+
+
+State 4
+
+   20 module: KWD_MODULE . id KWD_IDENT quoted_string EOL
+
+    id  shift, and go to state 22
+
+
+State 5
+
+   21 end_module: KWD_END_MODULE . EOL
+
+    EOL  shift, and go to state 23
+
+
+State 6
+
+   18 literal: KWD_LITERAL . EOL
+
+    EOL  shift, and go to state 24
+
+
+State 7
+
+   19 end_literal: KWD_END_LITERAL .
+
+    $default  reduce using rule 19 (end_literal)
+
+
+State 8
+
+   98 constant: KWD_CONST . OPEN_LIST constlist_ids KWD_EQ value $@15 constlist_opts
+  100         | KWD_CONST . id KWD_EQ value $@16 constant_opts
+
+    OPEN_LIST  shift, and go to state 25
+    id         shift, and go to state 26
+
+
+State 9
+
+  172 aggregate: KWD_AGGREGATE . id $@47 agg_opts agg_items
+
+    id  shift, and go to state 27
+
+
+State 10
+
+   14 varset: sdlvar . KWD_EQ quoted_string $@1 EOL
+   16       | sdlvar . KWD_EQ value $@2 EOL
+
+    KWD_EQ  shift, and go to state 28
+
+
+State 11
+
+   17 literal_line: tline .
+
+    $default  reduce using rule 17 (literal_line)
+
+
+State 12
+
+    4 line: comment .
+
+    $default  reduce using rule 4 (line)
+
+
+State 13
+
+    2 prog: prog line .
+
+    $default  reduce using rule 2 (prog)
+
+
+State 14
+
+    9 line: varset .
+
+    $default  reduce using rule 9 (line)
+
+
+State 15
+
+   11 line: literal_line .
+
+    $default  reduce using rule 11 (line)
+
+
+State 16
+
+   10 line: literal .
+
+    $default  reduce using rule 10 (line)
+
+
+State 17
+
+   12 line: end_literal .
+
+    $default  reduce using rule 12 (line)
+
+
+State 18
+
+    5 line: module .
+
+    $default  reduce using rule 5 (line)
+
+
+State 19
+
+    6 line: end_module .
+
+    $default  reduce using rule 6 (line)
+
+
+State 20
+
+    8 line: constant .
+
+    $default  reduce using rule 8 (line)
+
+
+State 21
+
+    7 line: aggregate .
+
+    $default  reduce using rule 7 (line)
+
+
+State 22
+
+   20 module: KWD_MODULE id . KWD_IDENT quoted_string EOL
+
+    KWD_IDENT  shift, and go to state 29
+
+
+State 23
+
+   21 end_module: KWD_END_MODULE EOL .
+
+    $default  reduce using rule 21 (end_module)
+
+
+State 24
+
+   18 literal: KWD_LITERAL EOL .
+
+    $default  reduce using rule 18 (literal)
+
+
+State 25
+
+   85 constlist_ids: . %empty  [KWD_EQ]
+   87              | . id KWD_EQ value $@11 constlist_ids
+   89              | . id $@12 constlist_ids
+   91              | . COMMA comment $@13 constlist_ids
+   93              | . comment $@14 constlist_ids
+   94              | . COMMA constlist_ids
+   95              | . CLOSE_LIST
+   98 constant: KWD_CONST OPEN_LIST . constlist_ids KWD_EQ value $@15 constlist_opts
+
+    COMMA       shift, and go to state 30
+    CLOSE_LIST  shift, and go to state 31
+    id          shift, and go to state 32
+    comment     shift, and go to state 33
+
+    $default  reduce using rule 85 (constlist_ids)
+
+    constlist_ids  go to state 34
+
+
+State 26
+
+  100 constant: KWD_CONST id . KWD_EQ value $@16 constant_opts
+
+    KWD_EQ  shift, and go to state 35
+
+
+State 27
+
+  171 $@47: . %empty
+  172 aggregate: KWD_AGGREGATE id . $@47 agg_opts agg_items
+
+    $default  reduce using rule 171 ($@47)
+
+    $@47  go to state 36
+
+
+State 28
+
+   14 varset: sdlvar KWD_EQ . quoted_string $@1 EOL
+   16       | sdlvar KWD_EQ . value $@2 EOL
+   22 value: . sdlvar
+   23      | . decimal
+   24      | . hexadecimal
+   25      | . octal
+
+    sdlvar         shift, and go to state 37
+    decimal        shift, and go to state 38
+    hexadecimal    shift, and go to state 39
+    octal          shift, and go to state 40
+    quoted_string  shift, and go to state 41
+
+    value  go to state 42
+
+
+State 29
+
+   20 module: KWD_MODULE id KWD_IDENT . quoted_string EOL
+
+    quoted_string  shift, and go to state 43
+
+
+State 30
+
+   85 constlist_ids: . %empty  [KWD_EQ]
+   87              | . id KWD_EQ value $@11 constlist_ids
+   89              | . id $@12 constlist_ids
+   91              | . COMMA comment $@13 constlist_ids
+   91              | COMMA . comment $@13 constlist_ids
+   93              | . comment $@14 constlist_ids
+   94              | . COMMA constlist_ids
+   94              | COMMA . constlist_ids
+   95              | . CLOSE_LIST
+
+    COMMA       shift, and go to state 30
+    CLOSE_LIST  shift, and go to state 31
+    id          shift, and go to state 32
+    comment     shift, and go to state 44
+
+    $default  reduce using rule 85 (constlist_ids)
+
+    constlist_ids  go to state 45
+
+
+State 31
+
+   95 constlist_ids: CLOSE_LIST .
+
+    $default  reduce using rule 95 (constlist_ids)
+
+
+State 32
+
+   87 constlist_ids: id . KWD_EQ value $@11 constlist_ids
+   88 $@12: . %empty  [KWD_EQ, COMMA, CLOSE_LIST, id, comment]
+   89 constlist_ids: id . $@12 constlist_ids
+
+    KWD_EQ  shift, and go to state 46
+
+    KWD_EQ    [reduce using rule 88 ($@12)]
+    $default  reduce using rule 88 ($@12)
+
+    $@12  go to state 47
+
+
+State 33
+
+   92 $@14: . %empty
+   93 constlist_ids: comment . $@14 constlist_ids
+
+    $default  reduce using rule 92 ($@14)
+
+    $@14  go to state 48
+
+
+State 34
+
+   98 constant: KWD_CONST OPEN_LIST constlist_ids . KWD_EQ value $@15 constlist_opts
+
+    KWD_EQ  shift, and go to state 49
+
+
+State 35
+
+   22 value: . sdlvar
+   23      | . decimal
+   24      | . hexadecimal
+   25      | . octal
+  100 constant: KWD_CONST id KWD_EQ . value $@16 constant_opts
+
+    sdlvar       shift, and go to state 37
+    decimal      shift, and go to state 38
+    hexadecimal  shift, and go to state 39
+    octal        shift, and go to state 40
+
+    value  go to state 50
+
+
+State 36
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  161 agg_opts: . KWD_STRUCT $@42 agg_opts
+  163         | . KWD_UNION $@43 agg_opts
+  165         | . tag $@44 agg_opts
+  167         | . pref $@45 agg_opts
+  169         | . align $@46 agg_opts
+  170         | . EOL
+  172 aggregate: KWD_AGGREGATE id $@47 . agg_opts agg_items
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    KWD_STRUCT   shift, and go to state 55
+    KWD_UNION    shift, and go to state 56
+    EOL          shift, and go to state 57
+
+    tag       go to state 58
+    pref      go to state 59
+    align     go to state 60
+    agg_opts  go to state 61
+
+
+State 37
+
+   22 value: sdlvar .
+
+    $default  reduce using rule 22 (value)
+
+
+State 38
+
+   23 value: decimal .
+
+    $default  reduce using rule 23 (value)
+
+
+State 39
+
+   24 value: hexadecimal .
+
+    $default  reduce using rule 24 (value)
+
+
+State 40
+
+   25 value: octal .
+
+    $default  reduce using rule 25 (value)
+
+
+State 41
+
+   13 $@1: . %empty
+   14 varset: sdlvar KWD_EQ quoted_string . $@1 EOL
+
+    $default  reduce using rule 13 ($@1)
+
+    $@1  go to state 62
+
+
+State 42
+
+   15 $@2: . %empty
+   16 varset: sdlvar KWD_EQ value . $@2 EOL
+
+    $default  reduce using rule 15 ($@2)
+
+    $@2  go to state 63
+
+
+State 43
+
+   20 module: KWD_MODULE id KWD_IDENT quoted_string . EOL
+
+    EOL  shift, and go to state 64
+
+
+State 44
+
+   90 $@13: . %empty  [KWD_EQ, COMMA, CLOSE_LIST, id, comment]
+   91 constlist_ids: COMMA comment . $@13 constlist_ids
+   92 $@14: . %empty  [KWD_EQ, COMMA, CLOSE_LIST, id, comment]
+   93 constlist_ids: comment . $@14 constlist_ids
+
+    KWD_EQ      reduce using rule 90 ($@13)
+    KWD_EQ      [reduce using rule 92 ($@14)]
+    COMMA       reduce using rule 90 ($@13)
+    COMMA       [reduce using rule 92 ($@14)]
+    CLOSE_LIST  reduce using rule 90 ($@13)
+    CLOSE_LIST  [reduce using rule 92 ($@14)]
+    id          reduce using rule 90 ($@13)
+    id          [reduce using rule 92 ($@14)]
+    comment     reduce using rule 90 ($@13)
+    comment     [reduce using rule 92 ($@14)]
+    $default    reduce using rule 90 ($@13)
+
+    $@13  go to state 65
+    $@14  go to state 48
+
+
+State 45
+
+   94 constlist_ids: COMMA constlist_ids .
+
+    $default  reduce using rule 94 (constlist_ids)
+
+
+State 46
+
+   22 value: . sdlvar
+   23      | . decimal
+   24      | . hexadecimal
+   25      | . octal
+   87 constlist_ids: id KWD_EQ . value $@11 constlist_ids
+
+    sdlvar       shift, and go to state 37
+    decimal      shift, and go to state 38
+    hexadecimal  shift, and go to state 39
+    octal        shift, and go to state 40
+
+    value  go to state 66
+
+
+State 47
+
+   85 constlist_ids: . %empty  [KWD_EQ]
+   87              | . id KWD_EQ value $@11 constlist_ids
+   89              | . id $@12 constlist_ids
+   89              | id $@12 . constlist_ids
+   91              | . COMMA comment $@13 constlist_ids
+   93              | . comment $@14 constlist_ids
+   94              | . COMMA constlist_ids
+   95              | . CLOSE_LIST
+
+    COMMA       shift, and go to state 30
+    CLOSE_LIST  shift, and go to state 31
+    id          shift, and go to state 32
+    comment     shift, and go to state 33
+
+    $default  reduce using rule 85 (constlist_ids)
+
+    constlist_ids  go to state 67
+
+
+State 48
+
+   85 constlist_ids: . %empty  [KWD_EQ]
+   87              | . id KWD_EQ value $@11 constlist_ids
+   89              | . id $@12 constlist_ids
+   91              | . COMMA comment $@13 constlist_ids
+   93              | . comment $@14 constlist_ids
+   93              | comment $@14 . constlist_ids
+   94              | . COMMA constlist_ids
+   95              | . CLOSE_LIST
+
+    COMMA       shift, and go to state 30
+    CLOSE_LIST  shift, and go to state 31
+    id          shift, and go to state 32
+    comment     shift, and go to state 33
+
+    $default  reduce using rule 85 (constlist_ids)
+
+    constlist_ids  go to state 68
+
+
+State 49
+
+   22 value: . sdlvar
+   23      | . decimal
+   24      | . hexadecimal
+   25      | . octal
+   98 constant: KWD_CONST OPEN_LIST constlist_ids KWD_EQ . value $@15 constlist_opts
+
+    sdlvar       shift, and go to state 37
+    decimal      shift, and go to state 38
+    hexadecimal  shift, and go to state 39
+    octal        shift, and go to state 40
+
+    value  go to state 69
+
+
+State 50
+
+   99 $@16: . %empty
+  100 constant: KWD_CONST id KWD_EQ value . $@16 constant_opts
+
+    $default  reduce using rule 99 ($@16)
+
+    $@16  go to state 70
+
+
+State 51
+
+   27 pref: KWD_PREFIX . quoted_string
+
+    quoted_string  shift, and go to state 71
+
+
+State 52
+
+   26 tag: KWD_TAG . quoted_string
+
+    quoted_string  shift, and go to state 72
+
+
+State 53
+
+   54 align: KWD_NOALIGN .
+
+    $default  reduce using rule 54 (align)
+
+
+State 54
+
+   53 align: KWD_ALIGN .  [KWD_PREFIX, KWD_TAG, KWD_NOALIGN, KWD_ALIGN, KWD_STRUCT, KWD_UNION, EOL]
+   55      | KWD_ALIGN . KWD_BYTE
+   56      | KWD_ALIGN . KWD_WORD
+   57      | KWD_ALIGN . KWD_LONG
+   58      | KWD_ALIGN . KWD_QUAD
+   59      | KWD_ALIGN . KWD_OCTA
+   60      | KWD_ALIGN . KWD_PAGE
+
+    KWD_BYTE  shift, and go to state 73
+    KWD_WORD  shift, and go to state 74
+    KWD_LONG  shift, and go to state 75
+    KWD_QUAD  shift, and go to state 76
+    KWD_OCTA  shift, and go to state 77
+    KWD_PAGE  shift, and go to state 78
+
+    $default  reduce using rule 53 (align)
+
+
+State 55
+
+  160 $@42: . %empty
+  161 agg_opts: KWD_STRUCT . $@42 agg_opts
+
+    $default  reduce using rule 160 ($@42)
+
+    $@42  go to state 79
+
+
+State 56
+
+  162 $@43: . %empty
+  163 agg_opts: KWD_UNION . $@43 agg_opts
+
+    $default  reduce using rule 162 ($@43)
+
+    $@43  go to state 80
+
+
+State 57
+
+  170 agg_opts: EOL .
+
+    $default  reduce using rule 170 (agg_opts)
+
+
+State 58
+
+  164 $@44: . %empty
+  165 agg_opts: tag . $@44 agg_opts
+
+    $default  reduce using rule 164 ($@44)
+
+    $@44  go to state 81
+
+
+State 59
+
+  166 $@45: . %empty
+  167 agg_opts: pref . $@45 agg_opts
+
+    $default  reduce using rule 166 ($@45)
+
+    $@45  go to state 82
+
+
+State 60
+
+  168 $@46: . %empty
+  169 agg_opts: align . $@46 agg_opts
+
+    $default  reduce using rule 168 ($@46)
+
+    $@46  go to state 83
+
+
+State 61
+
+  146 agg_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+  147          | . KWD_END id EOL
+  149          | . id KWD_STRUCT $@36 struct_opts struct_items agg_items
+  151          | . id KWD_UNION $@37 union_opts union_items agg_items
+  153          | . id basetypes $@38 field_opts agg_items
+  155          | . id syntypes $@39 field_opts agg_items
+  157          | . id usertypes $@40 field_opts agg_items
+  159          | . comment $@41 agg_items
+  172 aggregate: KWD_AGGREGATE id $@47 agg_opts . agg_items
+
+    KWD_END  shift, and go to state 84
+    id       shift, and go to state 85
+    comment  shift, and go to state 86
+
+    comment   [reduce using rule 146 (agg_items)]
+    $default  reduce using rule 146 (agg_items)
+
+    agg_items  go to state 87
+
+
+State 62
+
+   14 varset: sdlvar KWD_EQ quoted_string $@1 . EOL
+
+    EOL  shift, and go to state 88
+
+
+State 63
+
+   16 varset: sdlvar KWD_EQ value $@2 . EOL
+
+    EOL  shift, and go to state 89
+
+
+State 64
+
+   20 module: KWD_MODULE id KWD_IDENT quoted_string EOL .
+
+    $default  reduce using rule 20 (module)
+
+
+State 65
+
+   85 constlist_ids: . %empty  [KWD_EQ]
+   87              | . id KWD_EQ value $@11 constlist_ids
+   89              | . id $@12 constlist_ids
+   91              | . COMMA comment $@13 constlist_ids
+   91              | COMMA comment $@13 . constlist_ids
+   93              | . comment $@14 constlist_ids
+   94              | . COMMA constlist_ids
+   95              | . CLOSE_LIST
+
+    COMMA       shift, and go to state 30
+    CLOSE_LIST  shift, and go to state 31
+    id          shift, and go to state 32
+    comment     shift, and go to state 33
+
+    $default  reduce using rule 85 (constlist_ids)
+
+    constlist_ids  go to state 90
+
+
+State 66
+
+   86 $@11: . %empty
+   87 constlist_ids: id KWD_EQ value . $@11 constlist_ids
+
+    $default  reduce using rule 86 ($@11)
+
+    $@11  go to state 91
+
+
+State 67
+
+   89 constlist_ids: id $@12 constlist_ids .
+
+    $default  reduce using rule 89 (constlist_ids)
+
+
+State 68
+
+   93 constlist_ids: comment $@14 constlist_ids .
+
+    $default  reduce using rule 93 (constlist_ids)
+
+
+State 69
+
+   97 $@15: . %empty
+   98 constant: KWD_CONST OPEN_LIST constlist_ids KWD_EQ value . $@15 constlist_opts
+
+    $default  reduce using rule 97 ($@15)
+
+    $@15  go to state 92
+
+
+State 70
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   65 constant_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   67              | . pref $@3 constant_opts
+   69              | . tag $@4 constant_opts
+   71              | . KWD_MASK $@5 constlist_opts
+   72              | . EOL
+  100 constant: KWD_CONST id KWD_EQ value $@16 . constant_opts
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 93
+    EOL         shift, and go to state 94
+
+    $default  reduce using rule 65 (constant_opts)
+
+    tag            go to state 95
+    pref           go to state 96
+    constant_opts  go to state 97
+
+
+State 71
+
+   27 pref: KWD_PREFIX quoted_string .
+
+    $default  reduce using rule 27 (pref)
+
+
+State 72
+
+   26 tag: KWD_TAG quoted_string .
+
+    $default  reduce using rule 26 (tag)
+
+
+State 73
+
+   55 align: KWD_ALIGN KWD_BYTE .
+
+    $default  reduce using rule 55 (align)
+
+
+State 74
+
+   56 align: KWD_ALIGN KWD_WORD .
+
+    $default  reduce using rule 56 (align)
+
+
+State 75
+
+   57 align: KWD_ALIGN KWD_LONG .
+
+    $default  reduce using rule 57 (align)
+
+
+State 76
+
+   58 align: KWD_ALIGN KWD_QUAD .
+
+    $default  reduce using rule 58 (align)
+
+
+State 77
+
+   59 align: KWD_ALIGN KWD_OCTA .
+
+    $default  reduce using rule 59 (align)
+
+
+State 78
+
+   60 align: KWD_ALIGN KWD_PAGE .
+
+    $default  reduce using rule 60 (align)
+
+
+State 79
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  161 agg_opts: . KWD_STRUCT $@42 agg_opts
+  161         | KWD_STRUCT $@42 . agg_opts
+  163         | . KWD_UNION $@43 agg_opts
+  165         | . tag $@44 agg_opts
+  167         | . pref $@45 agg_opts
+  169         | . align $@46 agg_opts
+  170         | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    KWD_STRUCT   shift, and go to state 55
+    KWD_UNION    shift, and go to state 56
+    EOL          shift, and go to state 57
+
+    tag       go to state 58
+    pref      go to state 59
+    align     go to state 60
+    agg_opts  go to state 98
+
+
+State 80
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  161 agg_opts: . KWD_STRUCT $@42 agg_opts
+  163         | . KWD_UNION $@43 agg_opts
+  163         | KWD_UNION $@43 . agg_opts
+  165         | . tag $@44 agg_opts
+  167         | . pref $@45 agg_opts
+  169         | . align $@46 agg_opts
+  170         | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    KWD_STRUCT   shift, and go to state 55
+    KWD_UNION    shift, and go to state 56
+    EOL          shift, and go to state 57
+
+    tag       go to state 58
+    pref      go to state 59
+    align     go to state 60
+    agg_opts  go to state 99
+
+
+State 81
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  161 agg_opts: . KWD_STRUCT $@42 agg_opts
+  163         | . KWD_UNION $@43 agg_opts
+  165         | . tag $@44 agg_opts
+  165         | tag $@44 . agg_opts
+  167         | . pref $@45 agg_opts
+  169         | . align $@46 agg_opts
+  170         | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    KWD_STRUCT   shift, and go to state 55
+    KWD_UNION    shift, and go to state 56
+    EOL          shift, and go to state 57
+
+    tag       go to state 58
+    pref      go to state 59
+    align     go to state 60
+    agg_opts  go to state 100
+
+
+State 82
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  161 agg_opts: . KWD_STRUCT $@42 agg_opts
+  163         | . KWD_UNION $@43 agg_opts
+  165         | . tag $@44 agg_opts
+  167         | . pref $@45 agg_opts
+  167         | pref $@45 . agg_opts
+  169         | . align $@46 agg_opts
+  170         | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    KWD_STRUCT   shift, and go to state 55
+    KWD_UNION    shift, and go to state 56
+    EOL          shift, and go to state 57
+
+    tag       go to state 58
+    pref      go to state 59
+    align     go to state 60
+    agg_opts  go to state 101
+
+
+State 83
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  161 agg_opts: . KWD_STRUCT $@42 agg_opts
+  163         | . KWD_UNION $@43 agg_opts
+  165         | . tag $@44 agg_opts
+  167         | . pref $@45 agg_opts
+  169         | . align $@46 agg_opts
+  169         | align $@46 . agg_opts
+  170         | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    KWD_STRUCT   shift, and go to state 55
+    KWD_UNION    shift, and go to state 56
+    EOL          shift, and go to state 57
+
+    tag       go to state 58
+    pref      go to state 59
+    align     go to state 60
+    agg_opts  go to state 102
+
+
+State 84
+
+  147 agg_items: KWD_END . id EOL
+
+    id  shift, and go to state 103
+
+
+State 85
+
+   33 basetypes: . KWD_PTR
+   34          | . KWD_BYTE
+   35          | . KWD_WORD
+   36          | . KWD_LONG
+   37          | . KWD_QUAD
+   38          | . KWD_OCTA
+   39          | . KWD_BFLD
+   40          | . KWD_FLOAT
+   41          | . KWD_DOUBLE
+   42 syntypes: . KWD_PACKED
+   43         | . KWD_ASCIC
+   44         | . KWD_DESC
+   45         | . KWD_HWADDR
+   46         | . KWD_IPADDR
+   47         | . KWD_IP4ADDR
+   48         | . KWD_IP6ADDR
+   49         | . KWD_SOCKET
+   50         | . KWD_ENTRY
+   51         | . KWD_VOID
+   52 usertypes: . id
+  149 agg_items: id . KWD_STRUCT $@36 struct_opts struct_items agg_items
+  151          | id . KWD_UNION $@37 union_opts union_items agg_items
+  153          | id . basetypes $@38 field_opts agg_items
+  155          | id . syntypes $@39 field_opts agg_items
+  157          | id . usertypes $@40 field_opts agg_items
+
+    KWD_BYTE     shift, and go to state 104
+    KWD_WORD     shift, and go to state 105
+    KWD_LONG     shift, and go to state 106
+    KWD_QUAD     shift, and go to state 107
+    KWD_OCTA     shift, and go to state 108
+    KWD_BFLD     shift, and go to state 109
+    KWD_FLOAT    shift, and go to state 110
+    KWD_DOUBLE   shift, and go to state 111
+    KWD_PACKED   shift, and go to state 112
+    KWD_PTR      shift, and go to state 113
+    KWD_VOID     shift, and go to state 114
+    KWD_ENTRY    shift, and go to state 115
+    KWD_ASCIC    shift, and go to state 116
+    KWD_DESC     shift, and go to state 117
+    KWD_HWADDR   shift, and go to state 118
+    KWD_IPADDR   shift, and go to state 119
+    KWD_IP4ADDR  shift, and go to state 120
+    KWD_IP6ADDR  shift, and go to state 121
+    KWD_SOCKET   shift, and go to state 122
+    KWD_STRUCT   shift, and go to state 123
+    KWD_UNION    shift, and go to state 124
+    id           shift, and go to state 125
+
+    basetypes  go to state 126
+    syntypes   go to state 127
+    usertypes  go to state 128
+
+
+State 86
+
+  158 $@41: . %empty
+  159 agg_items: comment . $@41 agg_items
+
+    $default  reduce using rule 158 ($@41)
+
+    $@41  go to state 129
+
+
+State 87
+
+  172 aggregate: KWD_AGGREGATE id $@47 agg_opts agg_items .
+
+    $default  reduce using rule 172 (aggregate)
+
+
+State 88
+
+   14 varset: sdlvar KWD_EQ quoted_string $@1 EOL .
+
+    $default  reduce using rule 14 (varset)
+
+
+State 89
+
+   16 varset: sdlvar KWD_EQ value $@2 EOL .
+
+    $default  reduce using rule 16 (varset)
+
+
+State 90
+
+   91 constlist_ids: COMMA comment $@13 constlist_ids .
+
+    $default  reduce using rule 91 (constlist_ids)
+
+
+State 91
+
+   85 constlist_ids: . %empty  [KWD_EQ]
+   87              | . id KWD_EQ value $@11 constlist_ids
+   87              | id KWD_EQ value $@11 . constlist_ids
+   89              | . id $@12 constlist_ids
+   91              | . COMMA comment $@13 constlist_ids
+   93              | . comment $@14 constlist_ids
+   94              | . COMMA constlist_ids
+   95              | . CLOSE_LIST
+
+    COMMA       shift, and go to state 30
+    CLOSE_LIST  shift, and go to state 31
+    id          shift, and go to state 32
+    comment     shift, and go to state 33
+
+    $default  reduce using rule 85 (constlist_ids)
+
+    constlist_ids  go to state 130
+
+
+State 92
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   28 inc: . KWD_INC value
+   61 radix: . KWD_RADIX KWD_DEC
+   62      | . KWD_RADIX KWD_OCT
+   63      | . KWD_RADIX KWD_BIN
+   64      | . KWD_RADIX KWD_HEX
+   73 constlist_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   75               | . pref $@6 constlist_opts
+   77               | . tag $@7 constlist_opts
+   79               | . inc $@8 constlist_opts
+   81               | . radix $@9 constlist_opts
+   83               | . KWD_MASK $@10 constlist_opts
+   84               | . EOL
+   98 constant: KWD_CONST OPEN_LIST constlist_ids KWD_EQ value $@15 . constlist_opts
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 131
+    KWD_INC     shift, and go to state 132
+    KWD_RADIX   shift, and go to state 133
+    EOL         shift, and go to state 134
+
+    $default  reduce using rule 73 (constlist_opts)
+
+    tag             go to state 135
+    pref            go to state 136
+    inc             go to state 137
+    radix           go to state 138
+    constlist_opts  go to state 139
+
+
+State 93
+
+   70 $@5: . %empty
+   71 constant_opts: KWD_MASK . $@5 constlist_opts
+
+    $default  reduce using rule 70 ($@5)
+
+    $@5  go to state 140
+
+
+State 94
+
+   72 constant_opts: EOL .
+
+    $default  reduce using rule 72 (constant_opts)
+
+
+State 95
+
+   68 $@4: . %empty
+   69 constant_opts: tag . $@4 constant_opts
+
+    $default  reduce using rule 68 ($@4)
+
+    $@4  go to state 141
+
+
+State 96
+
+   66 $@3: . %empty
+   67 constant_opts: pref . $@3 constant_opts
+
+    $default  reduce using rule 66 ($@3)
+
+    $@3  go to state 142
+
+
+State 97
+
+  100 constant: KWD_CONST id KWD_EQ value $@16 constant_opts .
+
+    $default  reduce using rule 100 (constant)
+
+
+State 98
+
+  161 agg_opts: KWD_STRUCT $@42 agg_opts .
+
+    $default  reduce using rule 161 (agg_opts)
+
+
+State 99
+
+  163 agg_opts: KWD_UNION $@43 agg_opts .
+
+    $default  reduce using rule 163 (agg_opts)
+
+
+State 100
+
+  165 agg_opts: tag $@44 agg_opts .
+
+    $default  reduce using rule 165 (agg_opts)
+
+
+State 101
+
+  167 agg_opts: pref $@45 agg_opts .
+
+    $default  reduce using rule 167 (agg_opts)
+
+
+State 102
+
+  169 agg_opts: align $@46 agg_opts .
+
+    $default  reduce using rule 169 (agg_opts)
+
+
+State 103
+
+  147 agg_items: KWD_END id . EOL
+
+    EOL  shift, and go to state 143
+
+
+State 104
+
+   34 basetypes: KWD_BYTE .
+
+    $default  reduce using rule 34 (basetypes)
+
+
+State 105
+
+   35 basetypes: KWD_WORD .
+
+    $default  reduce using rule 35 (basetypes)
+
+
+State 106
+
+   36 basetypes: KWD_LONG .
+
+    $default  reduce using rule 36 (basetypes)
+
+
+State 107
+
+   37 basetypes: KWD_QUAD .
+
+    $default  reduce using rule 37 (basetypes)
+
+
+State 108
+
+   38 basetypes: KWD_OCTA .
+
+    $default  reduce using rule 38 (basetypes)
+
+
+State 109
+
+   39 basetypes: KWD_BFLD .
+
+    $default  reduce using rule 39 (basetypes)
+
+
+State 110
+
+   40 basetypes: KWD_FLOAT .
+
+    $default  reduce using rule 40 (basetypes)
+
+
+State 111
+
+   41 basetypes: KWD_DOUBLE .
+
+    $default  reduce using rule 41 (basetypes)
+
+
+State 112
+
+   42 syntypes: KWD_PACKED .
+
+    $default  reduce using rule 42 (syntypes)
+
+
+State 113
+
+   33 basetypes: KWD_PTR .
+
+    $default  reduce using rule 33 (basetypes)
+
+
+State 114
+
+   51 syntypes: KWD_VOID .
+
+    $default  reduce using rule 51 (syntypes)
+
+
+State 115
+
+   50 syntypes: KWD_ENTRY .
+
+    $default  reduce using rule 50 (syntypes)
+
+
+State 116
+
+   43 syntypes: KWD_ASCIC .
+
+    $default  reduce using rule 43 (syntypes)
+
+
+State 117
+
+   44 syntypes: KWD_DESC .
+
+    $default  reduce using rule 44 (syntypes)
+
+
+State 118
+
+   45 syntypes: KWD_HWADDR .
+
+    $default  reduce using rule 45 (syntypes)
+
+
+State 119
+
+   46 syntypes: KWD_IPADDR .
+
+    $default  reduce using rule 46 (syntypes)
+
+
+State 120
+
+   47 syntypes: KWD_IP4ADDR .
+
+    $default  reduce using rule 47 (syntypes)
+
+
+State 121
+
+   48 syntypes: KWD_IP6ADDR .
+
+    $default  reduce using rule 48 (syntypes)
+
+
+State 122
+
+   49 syntypes: KWD_SOCKET .
+
+    $default  reduce using rule 49 (syntypes)
+
+
+State 123
+
+  148 $@36: . %empty
+  149 agg_items: id KWD_STRUCT . $@36 struct_opts struct_items agg_items
+
+    $default  reduce using rule 148 ($@36)
+
+    $@36  go to state 144
+
+
+State 124
+
+  150 $@37: . %empty
+  151 agg_items: id KWD_UNION . $@37 union_opts union_items agg_items
+
+    $default  reduce using rule 150 ($@37)
+
+    $@37  go to state 145
+
+
+State 125
+
+   52 usertypes: id .
+
+    $default  reduce using rule 52 (usertypes)
+
+
+State 126
+
+  152 $@38: . %empty
+  153 agg_items: id basetypes . $@38 field_opts agg_items
+
+    $default  reduce using rule 152 ($@38)
+
+    $@38  go to state 146
+
+
+State 127
+
+  154 $@39: . %empty
+  155 agg_items: id syntypes . $@39 field_opts agg_items
+
+    $default  reduce using rule 154 ($@39)
+
+    $@39  go to state 147
+
+
+State 128
+
+  156 $@40: . %empty
+  157 agg_items: id usertypes . $@40 field_opts agg_items
+
+    $default  reduce using rule 156 ($@40)
+
+    $@40  go to state 148
+
+
+State 129
+
+  146 agg_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+  147          | . KWD_END id EOL
+  149          | . id KWD_STRUCT $@36 struct_opts struct_items agg_items
+  151          | . id KWD_UNION $@37 union_opts union_items agg_items
+  153          | . id basetypes $@38 field_opts agg_items
+  155          | . id syntypes $@39 field_opts agg_items
+  157          | . id usertypes $@40 field_opts agg_items
+  159          | . comment $@41 agg_items
+  159          | comment $@41 . agg_items
+
+    KWD_END  shift, and go to state 84
+    id       shift, and go to state 85
+    comment  shift, and go to state 86
+
+    comment   [reduce using rule 146 (agg_items)]
+    $default  reduce using rule 146 (agg_items)
+
+    agg_items  go to state 149
+
+
+State 130
+
+   87 constlist_ids: id KWD_EQ value $@11 constlist_ids .
+
+    $default  reduce using rule 87 (constlist_ids)
+
+
+State 131
+
+   82 $@10: . %empty
+   83 constlist_opts: KWD_MASK . $@10 constlist_opts
+
+    $default  reduce using rule 82 ($@10)
+
+    $@10  go to state 150
+
+
+State 132
+
+   22 value: . sdlvar
+   23      | . decimal
+   24      | . hexadecimal
+   25      | . octal
+   28 inc: KWD_INC . value
+
+    sdlvar       shift, and go to state 37
+    decimal      shift, and go to state 38
+    hexadecimal  shift, and go to state 39
+    octal        shift, and go to state 40
+
+    value  go to state 151
+
+
+State 133
+
+   61 radix: KWD_RADIX . KWD_DEC
+   62      | KWD_RADIX . KWD_OCT
+   63      | KWD_RADIX . KWD_BIN
+   64      | KWD_RADIX . KWD_HEX
+
+    KWD_DEC  shift, and go to state 152
+    KWD_HEX  shift, and go to state 153
+    KWD_OCT  shift, and go to state 154
+    KWD_BIN  shift, and go to state 155
+
+
+State 134
+
+   84 constlist_opts: EOL .
+
+    $default  reduce using rule 84 (constlist_opts)
+
+
+State 135
+
+   76 $@7: . %empty
+   77 constlist_opts: tag . $@7 constlist_opts
+
+    $default  reduce using rule 76 ($@7)
+
+    $@7  go to state 156
+
+
+State 136
+
+   74 $@6: . %empty
+   75 constlist_opts: pref . $@6 constlist_opts
+
+    $default  reduce using rule 74 ($@6)
+
+    $@6  go to state 157
+
+
+State 137
+
+   78 $@8: . %empty
+   79 constlist_opts: inc . $@8 constlist_opts
+
+    $default  reduce using rule 78 ($@8)
+
+    $@8  go to state 158
+
+
+State 138
+
+   80 $@9: . %empty
+   81 constlist_opts: radix . $@9 constlist_opts
+
+    $default  reduce using rule 80 ($@9)
+
+    $@9  go to state 159
+
+
+State 139
+
+   98 constant: KWD_CONST OPEN_LIST constlist_ids KWD_EQ value $@15 constlist_opts .
+
+    $default  reduce using rule 98 (constant)
+
+
+State 140
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   28 inc: . KWD_INC value
+   61 radix: . KWD_RADIX KWD_DEC
+   62      | . KWD_RADIX KWD_OCT
+   63      | . KWD_RADIX KWD_BIN
+   64      | . KWD_RADIX KWD_HEX
+   71 constant_opts: KWD_MASK $@5 . constlist_opts
+   73 constlist_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   75               | . pref $@6 constlist_opts
+   77               | . tag $@7 constlist_opts
+   79               | . inc $@8 constlist_opts
+   81               | . radix $@9 constlist_opts
+   83               | . KWD_MASK $@10 constlist_opts
+   84               | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 131
+    KWD_INC     shift, and go to state 132
+    KWD_RADIX   shift, and go to state 133
+    EOL         shift, and go to state 134
+
+    $default  reduce using rule 73 (constlist_opts)
+
+    tag             go to state 135
+    pref            go to state 136
+    inc             go to state 137
+    radix           go to state 138
+    constlist_opts  go to state 160
+
+
+State 141
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   65 constant_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   67              | . pref $@3 constant_opts
+   69              | . tag $@4 constant_opts
+   69              | tag $@4 . constant_opts
+   71              | . KWD_MASK $@5 constlist_opts
+   72              | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 93
+    EOL         shift, and go to state 94
+
+    $default  reduce using rule 65 (constant_opts)
+
+    tag            go to state 95
+    pref           go to state 96
+    constant_opts  go to state 161
+
+
+State 142
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   65 constant_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   67              | . pref $@3 constant_opts
+   67              | pref $@3 . constant_opts
+   69              | . tag $@4 constant_opts
+   71              | . KWD_MASK $@5 constlist_opts
+   72              | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 93
+    EOL         shift, and go to state 94
+
+    $default  reduce using rule 65 (constant_opts)
+
+    tag            go to state 95
+    pref           go to state 96
+    constant_opts  go to state 162
+
+
+State 143
+
+  147 agg_items: KWD_END id EOL .
+
+    $default  reduce using rule 147 (agg_items)
+
+
+State 144
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  130 struct_opts: . tag $@29 struct_opts
+  132            | . pref $@30 struct_opts
+  134            | . align $@31 struct_opts
+  135            | . EOL
+  149 agg_items: id KWD_STRUCT $@36 . struct_opts struct_items agg_items
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    EOL          shift, and go to state 163
+
+    tag          go to state 164
+    pref         go to state 165
+    align        go to state 166
+    struct_opts  go to state 167
+
+
+State 145
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+  137 union_opts: . tag $@32 union_opts
+  139           | . pref $@33 union_opts
+  140           | . EOL
+  151 agg_items: id KWD_UNION $@37 . union_opts union_items agg_items
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    EOL         shift, and go to state 168
+
+    tag         go to state 169
+    pref        go to state 170
+    union_opts  go to state 171
+
+
+State 146
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+  153 agg_items: id basetypes $@38 . field_opts agg_items
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 179
+
+
+State 147
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+  155 agg_items: id syntypes $@39 . field_opts agg_items
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 180
+
+
+State 148
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+  157 agg_items: id usertypes $@40 . field_opts agg_items
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 181
+
+
+State 149
+
+  159 agg_items: comment $@41 agg_items .
+
+    $default  reduce using rule 159 (agg_items)
+
+
+State 150
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   28 inc: . KWD_INC value
+   61 radix: . KWD_RADIX KWD_DEC
+   62      | . KWD_RADIX KWD_OCT
+   63      | . KWD_RADIX KWD_BIN
+   64      | . KWD_RADIX KWD_HEX
+   73 constlist_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   75               | . pref $@6 constlist_opts
+   77               | . tag $@7 constlist_opts
+   79               | . inc $@8 constlist_opts
+   81               | . radix $@9 constlist_opts
+   83               | . KWD_MASK $@10 constlist_opts
+   83               | KWD_MASK $@10 . constlist_opts
+   84               | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 131
+    KWD_INC     shift, and go to state 132
+    KWD_RADIX   shift, and go to state 133
+    EOL         shift, and go to state 134
+
+    $default  reduce using rule 73 (constlist_opts)
+
+    tag             go to state 135
+    pref            go to state 136
+    inc             go to state 137
+    radix           go to state 138
+    constlist_opts  go to state 182
+
+
+State 151
+
+   28 inc: KWD_INC value .
+
+    $default  reduce using rule 28 (inc)
+
+
+State 152
+
+   61 radix: KWD_RADIX KWD_DEC .
+
+    $default  reduce using rule 61 (radix)
+
+
+State 153
+
+   64 radix: KWD_RADIX KWD_HEX .
+
+    $default  reduce using rule 64 (radix)
+
+
+State 154
+
+   62 radix: KWD_RADIX KWD_OCT .
+
+    $default  reduce using rule 62 (radix)
+
+
+State 155
+
+   63 radix: KWD_RADIX KWD_BIN .
+
+    $default  reduce using rule 63 (radix)
+
+
+State 156
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   28 inc: . KWD_INC value
+   61 radix: . KWD_RADIX KWD_DEC
+   62      | . KWD_RADIX KWD_OCT
+   63      | . KWD_RADIX KWD_BIN
+   64      | . KWD_RADIX KWD_HEX
+   73 constlist_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   75               | . pref $@6 constlist_opts
+   77               | . tag $@7 constlist_opts
+   77               | tag $@7 . constlist_opts
+   79               | . inc $@8 constlist_opts
+   81               | . radix $@9 constlist_opts
+   83               | . KWD_MASK $@10 constlist_opts
+   84               | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 131
+    KWD_INC     shift, and go to state 132
+    KWD_RADIX   shift, and go to state 133
+    EOL         shift, and go to state 134
+
+    $default  reduce using rule 73 (constlist_opts)
+
+    tag             go to state 135
+    pref            go to state 136
+    inc             go to state 137
+    radix           go to state 138
+    constlist_opts  go to state 183
+
+
+State 157
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   28 inc: . KWD_INC value
+   61 radix: . KWD_RADIX KWD_DEC
+   62      | . KWD_RADIX KWD_OCT
+   63      | . KWD_RADIX KWD_BIN
+   64      | . KWD_RADIX KWD_HEX
+   73 constlist_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   75               | . pref $@6 constlist_opts
+   75               | pref $@6 . constlist_opts
+   77               | . tag $@7 constlist_opts
+   79               | . inc $@8 constlist_opts
+   81               | . radix $@9 constlist_opts
+   83               | . KWD_MASK $@10 constlist_opts
+   84               | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 131
+    KWD_INC     shift, and go to state 132
+    KWD_RADIX   shift, and go to state 133
+    EOL         shift, and go to state 134
+
+    $default  reduce using rule 73 (constlist_opts)
+
+    tag             go to state 135
+    pref            go to state 136
+    inc             go to state 137
+    radix           go to state 138
+    constlist_opts  go to state 184
+
+
+State 158
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   28 inc: . KWD_INC value
+   61 radix: . KWD_RADIX KWD_DEC
+   62      | . KWD_RADIX KWD_OCT
+   63      | . KWD_RADIX KWD_BIN
+   64      | . KWD_RADIX KWD_HEX
+   73 constlist_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   75               | . pref $@6 constlist_opts
+   77               | . tag $@7 constlist_opts
+   79               | . inc $@8 constlist_opts
+   79               | inc $@8 . constlist_opts
+   81               | . radix $@9 constlist_opts
+   83               | . KWD_MASK $@10 constlist_opts
+   84               | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 131
+    KWD_INC     shift, and go to state 132
+    KWD_RADIX   shift, and go to state 133
+    EOL         shift, and go to state 134
+
+    $default  reduce using rule 73 (constlist_opts)
+
+    tag             go to state 135
+    pref            go to state 136
+    inc             go to state 137
+    radix           go to state 138
+    constlist_opts  go to state 185
+
+
+State 159
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   28 inc: . KWD_INC value
+   61 radix: . KWD_RADIX KWD_DEC
+   62      | . KWD_RADIX KWD_OCT
+   63      | . KWD_RADIX KWD_BIN
+   64      | . KWD_RADIX KWD_HEX
+   73 constlist_opts: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+   75               | . pref $@6 constlist_opts
+   77               | . tag $@7 constlist_opts
+   79               | . inc $@8 constlist_opts
+   81               | . radix $@9 constlist_opts
+   81               | radix $@9 . constlist_opts
+   83               | . KWD_MASK $@10 constlist_opts
+   84               | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    KWD_MASK    shift, and go to state 131
+    KWD_INC     shift, and go to state 132
+    KWD_RADIX   shift, and go to state 133
+    EOL         shift, and go to state 134
+
+    $default  reduce using rule 73 (constlist_opts)
+
+    tag             go to state 135
+    pref            go to state 136
+    inc             go to state 137
+    radix           go to state 138
+    constlist_opts  go to state 186
+
+
+State 160
+
+   71 constant_opts: KWD_MASK $@5 constlist_opts .
+
+    $default  reduce using rule 71 (constant_opts)
+
+
+State 161
+
+   69 constant_opts: tag $@4 constant_opts .
+
+    $default  reduce using rule 69 (constant_opts)
+
+
+State 162
+
+   67 constant_opts: pref $@3 constant_opts .
+
+    $default  reduce using rule 67 (constant_opts)
+
+
+State 163
+
+  135 struct_opts: EOL .
+
+    $default  reduce using rule 135 (struct_opts)
+
+
+State 164
+
+  129 $@29: . %empty
+  130 struct_opts: tag . $@29 struct_opts
+
+    $default  reduce using rule 129 ($@29)
+
+    $@29  go to state 187
+
+
+State 165
+
+  131 $@30: . %empty
+  132 struct_opts: pref . $@30 struct_opts
+
+    $default  reduce using rule 131 ($@30)
+
+    $@30  go to state 188
+
+
+State 166
+
+  133 $@31: . %empty
+  134 struct_opts: align . $@31 struct_opts
+
+    $default  reduce using rule 133 ($@31)
+
+    $@31  go to state 189
+
+
+State 167
+
+  101 struct_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  102             | . KWD_END id EOL
+  104             | . id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  106             | . id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | . id basetypes $@19 field_opts struct_items
+  110             | . id syntypes $@20 field_opts struct_items
+  112             | . id usertypes $@21 field_opts struct_items
+  114             | . comment $@22 struct_items
+  149 agg_items: id KWD_STRUCT $@36 struct_opts . struct_items agg_items
+
+    KWD_END  shift, and go to state 190
+    id       shift, and go to state 191
+    comment  shift, and go to state 192
+
+    KWD_END   [reduce using rule 101 (struct_items)]
+    id        [reduce using rule 101 (struct_items)]
+    comment   [reduce using rule 101 (struct_items)]
+    $default  reduce using rule 101 (struct_items)
+
+    struct_items  go to state 193
+
+
+State 168
+
+  140 union_opts: EOL .
+
+    $default  reduce using rule 140 (union_opts)
+
+
+State 169
+
+  136 $@32: . %empty
+  137 union_opts: tag . $@32 union_opts
+
+    $default  reduce using rule 136 ($@32)
+
+    $@32  go to state 194
+
+
+State 170
+
+  138 $@33: . %empty
+  139 union_opts: pref . $@33 union_opts
+
+    $default  reduce using rule 138 ($@33)
+
+    $@33  go to state 195
+
+
+State 171
+
+  115 union_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  116            | . KWD_END id EOL
+  118            | . id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | . id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  122            | . id basetypes $@25 field_opts union_items
+  124            | . id syntypes $@26 field_opts union_items
+  126            | . id usertypes $@27 field_opts union_items
+  128            | . comment $@28 union_items
+  151 agg_items: id KWD_UNION $@37 union_opts . union_items agg_items
+
+    KWD_END  shift, and go to state 196
+    id       shift, and go to state 197
+    comment  shift, and go to state 198
+
+    KWD_END   [reduce using rule 115 (union_items)]
+    id        [reduce using rule 115 (union_items)]
+    comment   [reduce using rule 115 (union_items)]
+    $default  reduce using rule 115 (union_items)
+
+    union_items  go to state 199
+
+
+State 172
+
+   31 signspec: KWD_SIGNED .
+
+    $default  reduce using rule 31 (signspec)
+
+
+State 173
+
+   32 signspec: KWD_UNSIGNED .
+
+    $default  reduce using rule 32 (signspec)
+
+
+State 174
+
+   22 value: . sdlvar
+   23      | . decimal
+   24      | . hexadecimal
+   25      | . octal
+   30 sizespec: KWD_DIMENSION . value
+
+    sdlvar       shift, and go to state 37
+    decimal      shift, and go to state 38
+    hexadecimal  shift, and go to state 39
+    octal        shift, and go to state 40
+
+    value  go to state 200
+
+
+State 175
+
+   22 value: . sdlvar
+   23      | . decimal
+   24      | . hexadecimal
+   25      | . octal
+   29 sizespec: KWD_LENGTH . value
+
+    sdlvar       shift, and go to state 37
+    decimal      shift, and go to state 38
+    hexadecimal  shift, and go to state 39
+    octal        shift, and go to state 40
+
+    value  go to state 201
+
+
+State 176
+
+  145 field_opts: EOL .
+
+    $default  reduce using rule 145 (field_opts)
+
+
+State 177
+
+  141 $@34: . %empty
+  142 field_opts: sizespec . $@34 field_opts
+
+    $default  reduce using rule 141 ($@34)
+
+    $@34  go to state 202
+
+
+State 178
+
+  143 $@35: . %empty
+  144 field_opts: signspec . $@35 field_opts
+
+    $default  reduce using rule 143 ($@35)
+
+    $@35  go to state 203
+
+
+State 179
+
+  146 agg_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+  147          | . KWD_END id EOL
+  149          | . id KWD_STRUCT $@36 struct_opts struct_items agg_items
+  151          | . id KWD_UNION $@37 union_opts union_items agg_items
+  153          | . id basetypes $@38 field_opts agg_items
+  153          | id basetypes $@38 field_opts . agg_items
+  155          | . id syntypes $@39 field_opts agg_items
+  157          | . id usertypes $@40 field_opts agg_items
+  159          | . comment $@41 agg_items
+
+    KWD_END  shift, and go to state 84
+    id       shift, and go to state 85
+    comment  shift, and go to state 86
+
+    comment   [reduce using rule 146 (agg_items)]
+    $default  reduce using rule 146 (agg_items)
+
+    agg_items  go to state 204
+
+
+State 180
+
+  146 agg_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+  147          | . KWD_END id EOL
+  149          | . id KWD_STRUCT $@36 struct_opts struct_items agg_items
+  151          | . id KWD_UNION $@37 union_opts union_items agg_items
+  153          | . id basetypes $@38 field_opts agg_items
+  155          | . id syntypes $@39 field_opts agg_items
+  155          | id syntypes $@39 field_opts . agg_items
+  157          | . id usertypes $@40 field_opts agg_items
+  159          | . comment $@41 agg_items
+
+    KWD_END  shift, and go to state 84
+    id       shift, and go to state 85
+    comment  shift, and go to state 86
+
+    comment   [reduce using rule 146 (agg_items)]
+    $default  reduce using rule 146 (agg_items)
+
+    agg_items  go to state 205
+
+
+State 181
+
+  146 agg_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+  147          | . KWD_END id EOL
+  149          | . id KWD_STRUCT $@36 struct_opts struct_items agg_items
+  151          | . id KWD_UNION $@37 union_opts union_items agg_items
+  153          | . id basetypes $@38 field_opts agg_items
+  155          | . id syntypes $@39 field_opts agg_items
+  157          | . id usertypes $@40 field_opts agg_items
+  157          | id usertypes $@40 field_opts . agg_items
+  159          | . comment $@41 agg_items
+
+    KWD_END  shift, and go to state 84
+    id       shift, and go to state 85
+    comment  shift, and go to state 86
+
+    comment   [reduce using rule 146 (agg_items)]
+    $default  reduce using rule 146 (agg_items)
+
+    agg_items  go to state 206
+
+
+State 182
+
+   83 constlist_opts: KWD_MASK $@10 constlist_opts .
+
+    $default  reduce using rule 83 (constlist_opts)
+
+
+State 183
+
+   77 constlist_opts: tag $@7 constlist_opts .
+
+    $default  reduce using rule 77 (constlist_opts)
+
+
+State 184
+
+   75 constlist_opts: pref $@6 constlist_opts .
+
+    $default  reduce using rule 75 (constlist_opts)
+
+
+State 185
+
+   79 constlist_opts: inc $@8 constlist_opts .
+
+    $default  reduce using rule 79 (constlist_opts)
+
+
+State 186
+
+   81 constlist_opts: radix $@9 constlist_opts .
+
+    $default  reduce using rule 81 (constlist_opts)
+
+
+State 187
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  130 struct_opts: . tag $@29 struct_opts
+  130            | tag $@29 . struct_opts
+  132            | . pref $@30 struct_opts
+  134            | . align $@31 struct_opts
+  135            | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    EOL          shift, and go to state 163
+
+    tag          go to state 164
+    pref         go to state 165
+    align        go to state 166
+    struct_opts  go to state 207
+
+
+State 188
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  130 struct_opts: . tag $@29 struct_opts
+  132            | . pref $@30 struct_opts
+  132            | pref $@30 . struct_opts
+  134            | . align $@31 struct_opts
+  135            | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    EOL          shift, and go to state 163
+
+    tag          go to state 164
+    pref         go to state 165
+    align        go to state 166
+    struct_opts  go to state 208
+
+
+State 189
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  130 struct_opts: . tag $@29 struct_opts
+  132            | . pref $@30 struct_opts
+  134            | . align $@31 struct_opts
+  134            | align $@31 . struct_opts
+  135            | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    EOL          shift, and go to state 163
+
+    tag          go to state 164
+    pref         go to state 165
+    align        go to state 166
+    struct_opts  go to state 209
+
+
+State 190
+
+  102 struct_items: KWD_END . id EOL
+
+    id  shift, and go to state 210
+
+
+State 191
+
+   33 basetypes: . KWD_PTR
+   34          | . KWD_BYTE
+   35          | . KWD_WORD
+   36          | . KWD_LONG
+   37          | . KWD_QUAD
+   38          | . KWD_OCTA
+   39          | . KWD_BFLD
+   40          | . KWD_FLOAT
+   41          | . KWD_DOUBLE
+   42 syntypes: . KWD_PACKED
+   43         | . KWD_ASCIC
+   44         | . KWD_DESC
+   45         | . KWD_HWADDR
+   46         | . KWD_IPADDR
+   47         | . KWD_IP4ADDR
+   48         | . KWD_IP6ADDR
+   49         | . KWD_SOCKET
+   50         | . KWD_ENTRY
+   51         | . KWD_VOID
+   52 usertypes: . id
+  104 struct_items: id . KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  106             | id . KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | id . basetypes $@19 field_opts struct_items
+  110             | id . syntypes $@20 field_opts struct_items
+  112             | id . usertypes $@21 field_opts struct_items
+
+    KWD_BYTE     shift, and go to state 104
+    KWD_WORD     shift, and go to state 105
+    KWD_LONG     shift, and go to state 106
+    KWD_QUAD     shift, and go to state 107
+    KWD_OCTA     shift, and go to state 108
+    KWD_BFLD     shift, and go to state 109
+    KWD_FLOAT    shift, and go to state 110
+    KWD_DOUBLE   shift, and go to state 111
+    KWD_PACKED   shift, and go to state 112
+    KWD_PTR      shift, and go to state 113
+    KWD_VOID     shift, and go to state 114
+    KWD_ENTRY    shift, and go to state 115
+    KWD_ASCIC    shift, and go to state 116
+    KWD_DESC     shift, and go to state 117
+    KWD_HWADDR   shift, and go to state 118
+    KWD_IPADDR   shift, and go to state 119
+    KWD_IP4ADDR  shift, and go to state 120
+    KWD_IP6ADDR  shift, and go to state 121
+    KWD_SOCKET   shift, and go to state 122
+    KWD_STRUCT   shift, and go to state 211
+    KWD_UNION    shift, and go to state 212
+    id           shift, and go to state 125
+
+    basetypes  go to state 213
+    syntypes   go to state 214
+    usertypes  go to state 215
+
+
+State 192
+
+  113 $@22: . %empty
+  114 struct_items: comment . $@22 struct_items
+
+    $default  reduce using rule 113 ($@22)
+
+    $@22  go to state 216
+
+
+State 193
+
+  146 agg_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+  147          | . KWD_END id EOL
+  149          | . id KWD_STRUCT $@36 struct_opts struct_items agg_items
+  149          | id KWD_STRUCT $@36 struct_opts struct_items . agg_items
+  151          | . id KWD_UNION $@37 union_opts union_items agg_items
+  153          | . id basetypes $@38 field_opts agg_items
+  155          | . id syntypes $@39 field_opts agg_items
+  157          | . id usertypes $@40 field_opts agg_items
+  159          | . comment $@41 agg_items
+
+    KWD_END  shift, and go to state 84
+    id       shift, and go to state 85
+    comment  shift, and go to state 86
+
+    comment   [reduce using rule 146 (agg_items)]
+    $default  reduce using rule 146 (agg_items)
+
+    agg_items  go to state 217
+
+
+State 194
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+  137 union_opts: . tag $@32 union_opts
+  137           | tag $@32 . union_opts
+  139           | . pref $@33 union_opts
+  140           | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    EOL         shift, and go to state 168
+
+    tag         go to state 169
+    pref        go to state 170
+    union_opts  go to state 218
+
+
+State 195
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+  137 union_opts: . tag $@32 union_opts
+  139           | . pref $@33 union_opts
+  139           | pref $@33 . union_opts
+  140           | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    EOL         shift, and go to state 168
+
+    tag         go to state 169
+    pref        go to state 170
+    union_opts  go to state 219
+
+
+State 196
+
+  116 union_items: KWD_END . id EOL
+
+    id  shift, and go to state 220
+
+
+State 197
+
+   33 basetypes: . KWD_PTR
+   34          | . KWD_BYTE
+   35          | . KWD_WORD
+   36          | . KWD_LONG
+   37          | . KWD_QUAD
+   38          | . KWD_OCTA
+   39          | . KWD_BFLD
+   40          | . KWD_FLOAT
+   41          | . KWD_DOUBLE
+   42 syntypes: . KWD_PACKED
+   43         | . KWD_ASCIC
+   44         | . KWD_DESC
+   45         | . KWD_HWADDR
+   46         | . KWD_IPADDR
+   47         | . KWD_IP4ADDR
+   48         | . KWD_IP6ADDR
+   49         | . KWD_SOCKET
+   50         | . KWD_ENTRY
+   51         | . KWD_VOID
+   52 usertypes: . id
+  118 union_items: id . KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | id . KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  122            | id . basetypes $@25 field_opts union_items
+  124            | id . syntypes $@26 field_opts union_items
+  126            | id . usertypes $@27 field_opts union_items
+
+    KWD_BYTE     shift, and go to state 104
+    KWD_WORD     shift, and go to state 105
+    KWD_LONG     shift, and go to state 106
+    KWD_QUAD     shift, and go to state 107
+    KWD_OCTA     shift, and go to state 108
+    KWD_BFLD     shift, and go to state 109
+    KWD_FLOAT    shift, and go to state 110
+    KWD_DOUBLE   shift, and go to state 111
+    KWD_PACKED   shift, and go to state 112
+    KWD_PTR      shift, and go to state 113
+    KWD_VOID     shift, and go to state 114
+    KWD_ENTRY    shift, and go to state 115
+    KWD_ASCIC    shift, and go to state 116
+    KWD_DESC     shift, and go to state 117
+    KWD_HWADDR   shift, and go to state 118
+    KWD_IPADDR   shift, and go to state 119
+    KWD_IP4ADDR  shift, and go to state 120
+    KWD_IP6ADDR  shift, and go to state 121
+    KWD_SOCKET   shift, and go to state 122
+    KWD_STRUCT   shift, and go to state 221
+    KWD_UNION    shift, and go to state 222
+    id           shift, and go to state 125
+
+    basetypes  go to state 223
+    syntypes   go to state 224
+    usertypes  go to state 225
+
+
+State 198
+
+  127 $@28: . %empty
+  128 union_items: comment . $@28 union_items
+
+    $default  reduce using rule 127 ($@28)
+
+    $@28  go to state 226
+
+
+State 199
+
+  146 agg_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, sdlvar, tline, comment]
+  147          | . KWD_END id EOL
+  149          | . id KWD_STRUCT $@36 struct_opts struct_items agg_items
+  151          | . id KWD_UNION $@37 union_opts union_items agg_items
+  151          | id KWD_UNION $@37 union_opts union_items . agg_items
+  153          | . id basetypes $@38 field_opts agg_items
+  155          | . id syntypes $@39 field_opts agg_items
+  157          | . id usertypes $@40 field_opts agg_items
+  159          | . comment $@41 agg_items
+
+    KWD_END  shift, and go to state 84
+    id       shift, and go to state 85
+    comment  shift, and go to state 86
+
+    comment   [reduce using rule 146 (agg_items)]
+    $default  reduce using rule 146 (agg_items)
+
+    agg_items  go to state 227
+
+
+State 200
+
+   30 sizespec: KWD_DIMENSION value .
+
+    $default  reduce using rule 30 (sizespec)
+
+
+State 201
+
+   29 sizespec: KWD_LENGTH value .
+
+    $default  reduce using rule 29 (sizespec)
+
+
+State 202
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  142 field_opts: . sizespec $@34 field_opts
+  142           | sizespec $@34 . field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 228
+
+
+State 203
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  144           | signspec $@35 . field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 229
+
+
+State 204
+
+  153 agg_items: id basetypes $@38 field_opts agg_items .
+
+    $default  reduce using rule 153 (agg_items)
+
+
+State 205
+
+  155 agg_items: id syntypes $@39 field_opts agg_items .
+
+    $default  reduce using rule 155 (agg_items)
+
+
+State 206
+
+  157 agg_items: id usertypes $@40 field_opts agg_items .
+
+    $default  reduce using rule 157 (agg_items)
+
+
+State 207
+
+  130 struct_opts: tag $@29 struct_opts .
+
+    $default  reduce using rule 130 (struct_opts)
+
+
+State 208
+
+  132 struct_opts: pref $@30 struct_opts .
+
+    $default  reduce using rule 132 (struct_opts)
+
+
+State 209
+
+  134 struct_opts: align $@31 struct_opts .
+
+    $default  reduce using rule 134 (struct_opts)
+
+
+State 210
+
+  102 struct_items: KWD_END id . EOL
+
+    EOL  shift, and go to state 230
+
+
+State 211
+
+  103 $@17: . %empty
+  104 struct_items: id KWD_STRUCT . $@17 struct_opts struct_items KWD_END id EOL
+
+    $default  reduce using rule 103 ($@17)
+
+    $@17  go to state 231
+
+
+State 212
+
+  105 $@18: . %empty
+  106 struct_items: id KWD_UNION . $@18 union_opts union_items KWD_END id EOL
+
+    $default  reduce using rule 105 ($@18)
+
+    $@18  go to state 232
+
+
+State 213
+
+  107 $@19: . %empty
+  108 struct_items: id basetypes . $@19 field_opts struct_items
+
+    $default  reduce using rule 107 ($@19)
+
+    $@19  go to state 233
+
+
+State 214
+
+  109 $@20: . %empty
+  110 struct_items: id syntypes . $@20 field_opts struct_items
+
+    $default  reduce using rule 109 ($@20)
+
+    $@20  go to state 234
+
+
+State 215
+
+  111 $@21: . %empty
+  112 struct_items: id usertypes . $@21 field_opts struct_items
+
+    $default  reduce using rule 111 ($@21)
+
+    $@21  go to state 235
+
+
+State 216
+
+  101 struct_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  102             | . KWD_END id EOL
+  104             | . id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  106             | . id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | . id basetypes $@19 field_opts struct_items
+  110             | . id syntypes $@20 field_opts struct_items
+  112             | . id usertypes $@21 field_opts struct_items
+  114             | . comment $@22 struct_items
+  114             | comment $@22 . struct_items
+
+    KWD_END  shift, and go to state 190
+    id       shift, and go to state 191
+    comment  shift, and go to state 192
+
+    KWD_END   [reduce using rule 101 (struct_items)]
+    id        [reduce using rule 101 (struct_items)]
+    comment   [reduce using rule 101 (struct_items)]
+    $default  reduce using rule 101 (struct_items)
+
+    struct_items  go to state 236
+
+
+State 217
+
+  149 agg_items: id KWD_STRUCT $@36 struct_opts struct_items agg_items .
+
+    $default  reduce using rule 149 (agg_items)
+
+
+State 218
+
+  137 union_opts: tag $@32 union_opts .
+
+    $default  reduce using rule 137 (union_opts)
+
+
+State 219
+
+  139 union_opts: pref $@33 union_opts .
+
+    $default  reduce using rule 139 (union_opts)
+
+
+State 220
+
+  116 union_items: KWD_END id . EOL
+
+    EOL  shift, and go to state 237
+
+
+State 221
+
+  117 $@23: . %empty
+  118 union_items: id KWD_STRUCT . $@23 struct_opts struct_items KWD_END id EOL
+
+    $default  reduce using rule 117 ($@23)
+
+    $@23  go to state 238
+
+
+State 222
+
+  119 $@24: . %empty
+  120 union_items: id KWD_UNION . $@24 union_opts union_items KWD_END id EOL
+
+    $default  reduce using rule 119 ($@24)
+
+    $@24  go to state 239
+
+
+State 223
+
+  121 $@25: . %empty
+  122 union_items: id basetypes . $@25 field_opts union_items
+
+    $default  reduce using rule 121 ($@25)
+
+    $@25  go to state 240
+
+
+State 224
+
+  123 $@26: . %empty
+  124 union_items: id syntypes . $@26 field_opts union_items
+
+    $default  reduce using rule 123 ($@26)
+
+    $@26  go to state 241
+
+
+State 225
+
+  125 $@27: . %empty
+  126 union_items: id usertypes . $@27 field_opts union_items
+
+    $default  reduce using rule 125 ($@27)
+
+    $@27  go to state 242
+
+
+State 226
+
+  115 union_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  116            | . KWD_END id EOL
+  118            | . id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | . id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  122            | . id basetypes $@25 field_opts union_items
+  124            | . id syntypes $@26 field_opts union_items
+  126            | . id usertypes $@27 field_opts union_items
+  128            | . comment $@28 union_items
+  128            | comment $@28 . union_items
+
+    KWD_END  shift, and go to state 196
+    id       shift, and go to state 197
+    comment  shift, and go to state 198
+
+    KWD_END   [reduce using rule 115 (union_items)]
+    id        [reduce using rule 115 (union_items)]
+    comment   [reduce using rule 115 (union_items)]
+    $default  reduce using rule 115 (union_items)
+
+    union_items  go to state 243
+
+
+State 227
+
+  151 agg_items: id KWD_UNION $@37 union_opts union_items agg_items .
+
+    $default  reduce using rule 151 (agg_items)
+
+
+State 228
+
+  142 field_opts: sizespec $@34 field_opts .
+
+    $default  reduce using rule 142 (field_opts)
+
+
+State 229
+
+  144 field_opts: signspec $@35 field_opts .
+
+    $default  reduce using rule 144 (field_opts)
+
+
+State 230
+
+  102 struct_items: KWD_END id EOL .
+
+    $default  reduce using rule 102 (struct_items)
+
+
+State 231
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  104 struct_items: id KWD_STRUCT $@17 . struct_opts struct_items KWD_END id EOL
+  130 struct_opts: . tag $@29 struct_opts
+  132            | . pref $@30 struct_opts
+  134            | . align $@31 struct_opts
+  135            | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    EOL          shift, and go to state 163
+
+    tag          go to state 164
+    pref         go to state 165
+    align        go to state 166
+    struct_opts  go to state 244
+
+
+State 232
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+  106 struct_items: id KWD_UNION $@18 . union_opts union_items KWD_END id EOL
+  137 union_opts: . tag $@32 union_opts
+  139           | . pref $@33 union_opts
+  140           | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    EOL         shift, and go to state 168
+
+    tag         go to state 169
+    pref        go to state 170
+    union_opts  go to state 245
+
+
+State 233
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  108 struct_items: id basetypes $@19 . field_opts struct_items
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 246
+
+
+State 234
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  110 struct_items: id syntypes $@20 . field_opts struct_items
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 247
+
+
+State 235
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  112 struct_items: id usertypes $@21 . field_opts struct_items
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 248
+
+
+State 236
+
+  114 struct_items: comment $@22 struct_items .
+
+    $default  reduce using rule 114 (struct_items)
+
+
+State 237
+
+  116 union_items: KWD_END id EOL .
+
+    $default  reduce using rule 116 (union_items)
+
+
+State 238
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+   53 align: . KWD_ALIGN
+   54      | . KWD_NOALIGN
+   55      | . KWD_ALIGN KWD_BYTE
+   56      | . KWD_ALIGN KWD_WORD
+   57      | . KWD_ALIGN KWD_LONG
+   58      | . KWD_ALIGN KWD_QUAD
+   59      | . KWD_ALIGN KWD_OCTA
+   60      | . KWD_ALIGN KWD_PAGE
+  118 union_items: id KWD_STRUCT $@23 . struct_opts struct_items KWD_END id EOL
+  130 struct_opts: . tag $@29 struct_opts
+  132            | . pref $@30 struct_opts
+  134            | . align $@31 struct_opts
+  135            | . EOL
+
+    KWD_PREFIX   shift, and go to state 51
+    KWD_TAG      shift, and go to state 52
+    KWD_NOALIGN  shift, and go to state 53
+    KWD_ALIGN    shift, and go to state 54
+    EOL          shift, and go to state 163
+
+    tag          go to state 164
+    pref         go to state 165
+    align        go to state 166
+    struct_opts  go to state 249
+
+
+State 239
+
+   26 tag: . KWD_TAG quoted_string
+   27 pref: . KWD_PREFIX quoted_string
+  120 union_items: id KWD_UNION $@24 . union_opts union_items KWD_END id EOL
+  137 union_opts: . tag $@32 union_opts
+  139           | . pref $@33 union_opts
+  140           | . EOL
+
+    KWD_PREFIX  shift, and go to state 51
+    KWD_TAG     shift, and go to state 52
+    EOL         shift, and go to state 168
+
+    tag         go to state 169
+    pref        go to state 170
+    union_opts  go to state 250
+
+
+State 240
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  122 union_items: id basetypes $@25 . field_opts union_items
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 251
+
+
+State 241
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  124 union_items: id syntypes $@26 . field_opts union_items
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 252
+
+
+State 242
+
+   29 sizespec: . KWD_LENGTH value
+   30         | . KWD_DIMENSION value
+   31 signspec: . KWD_SIGNED
+   32         | . KWD_UNSIGNED
+  126 union_items: id usertypes $@27 . field_opts union_items
+  142 field_opts: . sizespec $@34 field_opts
+  144           | . signspec $@35 field_opts
+  145           | . EOL
+
+    KWD_SIGNED     shift, and go to state 172
+    KWD_UNSIGNED   shift, and go to state 173
+    KWD_DIMENSION  shift, and go to state 174
+    KWD_LENGTH     shift, and go to state 175
+    EOL            shift, and go to state 176
+
+    sizespec    go to state 177
+    signspec    go to state 178
+    field_opts  go to state 253
+
+
+State 243
+
+  128 union_items: comment $@28 union_items .
+
+    $default  reduce using rule 128 (union_items)
+
+
+State 244
+
+  101 struct_items: . %empty  [KWD_END]
+  102             | . KWD_END id EOL
+  104             | . id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  104             | id KWD_STRUCT $@17 struct_opts . struct_items KWD_END id EOL
+  106             | . id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | . id basetypes $@19 field_opts struct_items
+  110             | . id syntypes $@20 field_opts struct_items
+  112             | . id usertypes $@21 field_opts struct_items
+  114             | . comment $@22 struct_items
+
+    KWD_END  shift, and go to state 190
+    id       shift, and go to state 191
+    comment  shift, and go to state 192
+
+    KWD_END  [reduce using rule 101 (struct_items)]
+
+    struct_items  go to state 254
+
+
+State 245
+
+  106 struct_items: id KWD_UNION $@18 union_opts . union_items KWD_END id EOL
+  115 union_items: . %empty  [KWD_END]
+  116            | . KWD_END id EOL
+  118            | . id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | . id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  122            | . id basetypes $@25 field_opts union_items
+  124            | . id syntypes $@26 field_opts union_items
+  126            | . id usertypes $@27 field_opts union_items
+  128            | . comment $@28 union_items
+
+    KWD_END  shift, and go to state 196
+    id       shift, and go to state 197
+    comment  shift, and go to state 198
+
+    KWD_END  [reduce using rule 115 (union_items)]
+
+    union_items  go to state 255
+
+
+State 246
+
+  101 struct_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  102             | . KWD_END id EOL
+  104             | . id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  106             | . id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | . id basetypes $@19 field_opts struct_items
+  108             | id basetypes $@19 field_opts . struct_items
+  110             | . id syntypes $@20 field_opts struct_items
+  112             | . id usertypes $@21 field_opts struct_items
+  114             | . comment $@22 struct_items
+
+    KWD_END  shift, and go to state 190
+    id       shift, and go to state 191
+    comment  shift, and go to state 192
+
+    KWD_END   [reduce using rule 101 (struct_items)]
+    id        [reduce using rule 101 (struct_items)]
+    comment   [reduce using rule 101 (struct_items)]
+    $default  reduce using rule 101 (struct_items)
+
+    struct_items  go to state 256
+
+
+State 247
+
+  101 struct_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  102             | . KWD_END id EOL
+  104             | . id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  106             | . id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | . id basetypes $@19 field_opts struct_items
+  110             | . id syntypes $@20 field_opts struct_items
+  110             | id syntypes $@20 field_opts . struct_items
+  112             | . id usertypes $@21 field_opts struct_items
+  114             | . comment $@22 struct_items
+
+    KWD_END  shift, and go to state 190
+    id       shift, and go to state 191
+    comment  shift, and go to state 192
+
+    KWD_END   [reduce using rule 101 (struct_items)]
+    id        [reduce using rule 101 (struct_items)]
+    comment   [reduce using rule 101 (struct_items)]
+    $default  reduce using rule 101 (struct_items)
+
+    struct_items  go to state 257
+
+
+State 248
+
+  101 struct_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  102             | . KWD_END id EOL
+  104             | . id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  106             | . id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | . id basetypes $@19 field_opts struct_items
+  110             | . id syntypes $@20 field_opts struct_items
+  112             | . id usertypes $@21 field_opts struct_items
+  112             | id usertypes $@21 field_opts . struct_items
+  114             | . comment $@22 struct_items
+
+    KWD_END  shift, and go to state 190
+    id       shift, and go to state 191
+    comment  shift, and go to state 192
+
+    KWD_END   [reduce using rule 101 (struct_items)]
+    id        [reduce using rule 101 (struct_items)]
+    comment   [reduce using rule 101 (struct_items)]
+    $default  reduce using rule 101 (struct_items)
+
+    struct_items  go to state 258
+
+
+State 249
+
+  101 struct_items: . %empty  [KWD_END]
+  102             | . KWD_END id EOL
+  104             | . id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL
+  106             | . id KWD_UNION $@18 union_opts union_items KWD_END id EOL
+  108             | . id basetypes $@19 field_opts struct_items
+  110             | . id syntypes $@20 field_opts struct_items
+  112             | . id usertypes $@21 field_opts struct_items
+  114             | . comment $@22 struct_items
+  118 union_items: id KWD_STRUCT $@23 struct_opts . struct_items KWD_END id EOL
+
+    KWD_END  shift, and go to state 190
+    id       shift, and go to state 191
+    comment  shift, and go to state 192
+
+    KWD_END  [reduce using rule 101 (struct_items)]
+
+    struct_items  go to state 259
+
+
+State 250
+
+  115 union_items: . %empty  [KWD_END]
+  116            | . KWD_END id EOL
+  118            | . id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | . id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  120            | id KWD_UNION $@24 union_opts . union_items KWD_END id EOL
+  122            | . id basetypes $@25 field_opts union_items
+  124            | . id syntypes $@26 field_opts union_items
+  126            | . id usertypes $@27 field_opts union_items
+  128            | . comment $@28 union_items
+
+    KWD_END  shift, and go to state 196
+    id       shift, and go to state 197
+    comment  shift, and go to state 198
+
+    KWD_END  [reduce using rule 115 (union_items)]
+
+    union_items  go to state 260
+
+
+State 251
+
+  115 union_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  116            | . KWD_END id EOL
+  118            | . id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | . id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  122            | . id basetypes $@25 field_opts union_items
+  122            | id basetypes $@25 field_opts . union_items
+  124            | . id syntypes $@26 field_opts union_items
+  126            | . id usertypes $@27 field_opts union_items
+  128            | . comment $@28 union_items
+
+    KWD_END  shift, and go to state 196
+    id       shift, and go to state 197
+    comment  shift, and go to state 198
+
+    KWD_END   [reduce using rule 115 (union_items)]
+    id        [reduce using rule 115 (union_items)]
+    comment   [reduce using rule 115 (union_items)]
+    $default  reduce using rule 115 (union_items)
+
+    union_items  go to state 261
+
+
+State 252
+
+  115 union_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  116            | . KWD_END id EOL
+  118            | . id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | . id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  122            | . id basetypes $@25 field_opts union_items
+  124            | . id syntypes $@26 field_opts union_items
+  124            | id syntypes $@26 field_opts . union_items
+  126            | . id usertypes $@27 field_opts union_items
+  128            | . comment $@28 union_items
+
+    KWD_END  shift, and go to state 196
+    id       shift, and go to state 197
+    comment  shift, and go to state 198
+
+    KWD_END   [reduce using rule 115 (union_items)]
+    id        [reduce using rule 115 (union_items)]
+    comment   [reduce using rule 115 (union_items)]
+    $default  reduce using rule 115 (union_items)
+
+    union_items  go to state 262
+
+
+State 253
+
+  115 union_items: . %empty  [$end, error, KWD_MODULE, KWD_END_MODULE, KWD_LITERAL, KWD_END_LITERAL, KWD_CONST, KWD_AGGREGATE, KWD_END, sdlvar, id, tline, comment]
+  116            | . KWD_END id EOL
+  118            | . id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL
+  120            | . id KWD_UNION $@24 union_opts union_items KWD_END id EOL
+  122            | . id basetypes $@25 field_opts union_items
+  124            | . id syntypes $@26 field_opts union_items
+  126            | . id usertypes $@27 field_opts union_items
+  126            | id usertypes $@27 field_opts . union_items
+  128            | . comment $@28 union_items
+
+    KWD_END  shift, and go to state 196
+    id       shift, and go to state 197
+    comment  shift, and go to state 198
+
+    KWD_END   [reduce using rule 115 (union_items)]
+    id        [reduce using rule 115 (union_items)]
+    comment   [reduce using rule 115 (union_items)]
+    $default  reduce using rule 115 (union_items)
+
+    union_items  go to state 263
+
+
+State 254
+
+  104 struct_items: id KWD_STRUCT $@17 struct_opts struct_items . KWD_END id EOL
+
+    KWD_END  shift, and go to state 264
+
+
+State 255
+
+  106 struct_items: id KWD_UNION $@18 union_opts union_items . KWD_END id EOL
+
+    KWD_END  shift, and go to state 265
+
+
+State 256
+
+  108 struct_items: id basetypes $@19 field_opts struct_items .
+
+    $default  reduce using rule 108 (struct_items)
+
+
+State 257
+
+  110 struct_items: id syntypes $@20 field_opts struct_items .
+
+    $default  reduce using rule 110 (struct_items)
+
+
+State 258
+
+  112 struct_items: id usertypes $@21 field_opts struct_items .
+
+    $default  reduce using rule 112 (struct_items)
+
+
+State 259
+
+  118 union_items: id KWD_STRUCT $@23 struct_opts struct_items . KWD_END id EOL
+
+    KWD_END  shift, and go to state 266
+
+
+State 260
+
+  120 union_items: id KWD_UNION $@24 union_opts union_items . KWD_END id EOL
+
+    KWD_END  shift, and go to state 267
+
+
+State 261
+
+  122 union_items: id basetypes $@25 field_opts union_items .
+
+    $default  reduce using rule 122 (union_items)
+
+
+State 262
+
+  124 union_items: id syntypes $@26 field_opts union_items .
+
+    $default  reduce using rule 124 (union_items)
+
+
+State 263
+
+  126 union_items: id usertypes $@27 field_opts union_items .
+
+    $default  reduce using rule 126 (union_items)
+
+
+State 264
+
+  104 struct_items: id KWD_STRUCT $@17 struct_opts struct_items KWD_END . id EOL
+
+    id  shift, and go to state 268
+
+
+State 265
+
+  106 struct_items: id KWD_UNION $@18 union_opts union_items KWD_END . id EOL
+
+    id  shift, and go to state 269
+
+
+State 266
+
+  118 union_items: id KWD_STRUCT $@23 struct_opts struct_items KWD_END . id EOL
+
+    id  shift, and go to state 270
+
+
+State 267
+
+  120 union_items: id KWD_UNION $@24 union_opts union_items KWD_END . id EOL
+
+    id  shift, and go to state 271
+
+
+State 268
+
+  104 struct_items: id KWD_STRUCT $@17 struct_opts struct_items KWD_END id . EOL
+
+    EOL  shift, and go to state 272
+
+
+State 269
+
+  106 struct_items: id KWD_UNION $@18 union_opts union_items KWD_END id . EOL
+
+    EOL  shift, and go to state 273
+
+
+State 270
+
+  118 union_items: id KWD_STRUCT $@23 struct_opts struct_items KWD_END id . EOL
+
+    EOL  shift, and go to state 274
+
+
+State 271
+
+  120 union_items: id KWD_UNION $@24 union_opts union_items KWD_END id . EOL
+
+    EOL  shift, and go to state 275
+
+
+State 272
+
+  104 struct_items: id KWD_STRUCT $@17 struct_opts struct_items KWD_END id EOL .
+
+    $default  reduce using rule 104 (struct_items)
+
+
+State 273
+
+  106 struct_items: id KWD_UNION $@18 union_opts union_items KWD_END id EOL .
+
+    $default  reduce using rule 106 (struct_items)
+
+
+State 274
+
+  118 union_items: id KWD_STRUCT $@23 struct_opts struct_items KWD_END id EOL .
+
+    $default  reduce using rule 118 (union_items)
+
+
+State 275
+
+  120 union_items: id KWD_UNION $@24 union_opts union_items KWD_END id EOL .
+
+    $default  reduce using rule 120 (union_items)

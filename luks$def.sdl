@@ -1,0 +1,88 @@
+MODULE  LUKS$DEF IDENT	"A.01-00"
+/*++
+/*  Abstract: A data structure and constant definitions for the Linux Unified Key Setup base on the
+/*		LUKS On-Disk Format Specification Version 1.2.2
+/*              by Clemens Fruhwirth <clemens@endorphin.org> May 4, 2016
+/*
+/*  Description: This specification use SDL Language.
+/*
+/*  Author: Ruslan R. Laishev
+/*
+/*  Creation date: 4-DEC-2017
+/*
+/*  Modification history:
+/*
+/*--
+
+#magic_l	= 6;           /* ’L’,’U’,’K’,’S’, 0xBA,0xBE
+#ciphername_l	= 32;
+#ciphermode_l	= 32;
+#hashspec_l  	= 32;
+#uuid_string_l	= 40;
+#digest_l     	= 20;
+#salt_l		= 32;
+#numkeys        = 8;
+
+
+CONSTANT	(
+	MAGIC 		= #magic_l,
+	CIPHERNAME 	= #ciphername_l,
+	CIPHERMODE 	= #ciphermode_l,
+	HASHSPEC 	= #hashspec_l,
+	UUID_STRING 	= #uuid_string_l
+	DIGEST          = #digest_l,
+	SALTSIZE        = #salt_l,
+	KEYON           = 0xDEAD,
+	KEYOFF
+) EQUALS 0 PREFIX "luks$" TAG "s_";
+
+CONSTANT        (
+	KEYON           = 0xDEAD,
+	KEYOFF          = 0xAC71F3,
+	KEYSLOTALIGN    = 4096,
+	SECTORSZ        = 512
+	STRIPES         = 4000
+) EQUALS 0 PREFIX "luks$" TAG "k_";
+
+/*
+/* 3 The partition header
+/* 3.1 Version 1
+/* The LUKS partition header has the layout as described in Figure 1. It starts
+/* at sector 0 of the partition 5 . LUKS uses 3 primitive data types in its header,
+/* • unsigned integer, 16 bit, stored in big endian
+/* • unsigned integer, 32 bit, stored in big endian
+/* • char[], a string stored as null terminated sequence of 8-bit characters 6
+/* • byte[], a sequence of bytes, treated as binary.
+
+AGGREGATE keyslt STRUCTURE PREFIX "luks$" TAG "kslt$" NOALIGN;
+	active  LONGWORD UNSIGNED;
+
+        /* parameters for PBKDF2 processing
+	pwditer LONGWORD UNSIGNED;
+	salt    BYTE UNSIGNED #salt_l;
+
+        /* parameters for AF store/load
+	keyoff  LONGWORD UNSIGNED;
+	stripes LONGWORD UNSIGNED;
+END keyslt;
+
+AGGREGATE phdr STRUCTURE PREFIX "luks$" TAG "phdr$" NOALIGN;
+	magic   BYTE UNSIGNED DIMENSION #magic_l;
+	version WORD UNSIGNED;
+	ciphnm  BYTE UNSIGNED DIMENSION #ciphername_l;
+	ciphmd  BYTE UNSIGNED DIMENSION #ciphermode_l;
+	hash	BYTE UNSIGNED DIMENSION #hash_l;
+	payoff  LONGWORD UNSIGNED;
+	keylen  LONGWORD UNSIGNED;
+
+	digest  BYTE UNSIGNED DIMENSION #digest_l;
+        salt  	BYTE UNSIGNED DIMENSION #salt_l;
+	itercnt LONGWORD UNSIGNED;
+	uuid    BYTE UNSIGNED DIMENSION #uuid_string_l;
+
+	kslt   luks$keyslt DIMENSION #numkeys;
+END phdr;
+
+
+
+END_MODULE;

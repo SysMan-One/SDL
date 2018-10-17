@@ -1,0 +1,104 @@
+MODULE	mbr$def IDENT "A.01-00";
+
+{++
+{
+{  Abstract: A Master Boot Record (for IBM PC/Intel computers) structures and constants definitions.
+{
+{  Author: Ruslan R. Laishev
+{
+{  Creation date: 21-NOV-2017
+{
+{  Modification history:
+{
+{	12-DEC-2017     RRL     Added GPT related definitions, correct typos.
+{
+{	06-FEB-2018	RRL
+{
+{--
+
+
+LITERAL;
+
+#ifdef	__STARLET__
+/*
+
+	This is a piece of texts is supposed to be copyied as-is.
+
+*/
+#endif
+
+END_LITERAL;
+
+
+{ MBR Layout
+{	Off:
+{	+0 		- 446 octets	- Bootloader
+{	+446(%x1BE)	- 64 octets	- Partion table (4 partitions)
+{	+510(%x1FE)	- 1 octet	- %x55
+{	+511(%x1FF)	- 1 octet	- %xAA
+
+{ End of MBR signature
+CONSTANT	magic EQUALS 0x55AA PREFIX "mbr$";
+
+{ A length of the bootloader code -  start of Partion Table
+#bootldrsz = 446;
+CONSTANT	bootldr EQUALS #bootldrsz PREFIX "mbr$";
+
+{ Cylinder/Head/Sector address structure
+AGGREGATE	chs	STRUCTURE PREFIX "mbr$" TAG "chs$" NOALIGN;
+	head	BYTE UNSIGNED;		{ Head
+	sector	BITFIELD DIMENSION 6;	{ Sector
+	cylindr	BITFIELD DIMENSION 10;	{ Cylinders
+END	chs;
+
+{
+{ Single Partition record structure
+{
+CONSTANT	passive	EQUALS 0 PREFIX "mbr$" TAG "pflag$";
+CONSTANT	bootable EQUALS 0x80 PREFIX "mbr$" TAG "pflag$";
+
+{ Partition types
+CONSTANT (
+	free,
+	fat12,
+	xenixroot,
+	xenixusr,
+	fat16,
+	ext,
+	fat16b,
+	exFAT,
+
+	Linux = 0x83,
+	extLinux = 0x85,
+
+	LLVM = 0x8e,    	{ Linux LVM
+	GPT = 0xee,             { GUID Partition Table = GPT
+	EFI = 0xef              { EFI System Partition
+
+	) EQUALS 0 INCREMENT 1 PREFIX "mbr$" TAG "ptype$" RADIX HEX;
+
+AGGREGATE	part	STRUCTURE PREFIX  "mbr$" TAG "part$" NOALIGN;
+	pflags		BYTE UNSIGNED;		{ Activity flag: bootable, passive
+	startchs	mbr$chs;		{ Begin of partition, CHS
+	ptype		BYTE UNSIGNED;		{ Type of partition: see partition types constant list
+	endchs		mbr$chs;		{ End of partition, CHS
+	startlba	LONGWORD UNSIGNED;	{ Start LBN of the partition
+	size		LONGWORD UNSIGNED;	{ Size of the partition in the blocks
+END	part;
+
+
+AGGREGATE	ptbl	STRUCTURE PREFIX "mbr$" TAG "" NOALIGN;
+	ptbl	mbr$part DIMENSION 4;
+END	ptbl;
+
+
+AGGREGATE	block	STRUCTURE PREFIX "mbr$" TAG "" NOALIGN;
+	bootloader	BYTE UNSIGNED DIMENSION #bootldrsz;
+
+	ptbl		mbr$ptbl;
+
+	magic		BYTE UNSIGNED DIMENSION 2;
+END	block;
+
+
+END_MODULE;

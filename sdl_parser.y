@@ -43,6 +43,8 @@
 **				one symbol prefix: { or !;
 **				added LITERAL END_LITERAL keywords to designate a "copy as-is" section to output file;
 **
+**	17-OCT-2018	SYS	Resolved a problem with processing literal/end_literal.
+**
 **--
 */
 
@@ -95,7 +97,8 @@ int	literal_state = 0;
 
 
 %union	{
-	int	bval;
+	int	bval;		/* SIGNED LONGWORD - 32 bits	*/
+	long long qval;		/* SIGNED QUADWORD - 64 bits	*/
 	char	tval[8192];
 }
 
@@ -189,8 +192,7 @@ prog	: %empty
 	;
 
 
-line	: %empty
-	| comment
+line	: comment
 		{ sdl_comment(sdlctx, $1); }
 	| module
 	| end_module
@@ -198,6 +200,8 @@ line	: %empty
 	| constant
 	| varset
 	| literal
+	| literal_line
+	| end_literal
 	;
 
 
@@ -209,20 +213,23 @@ varset	: sdlvar KWD_EQ quoted_string { sdl_var_set(sdlctx, $1, $3, SDL_K_VARTYPE
 	;
 
 
-literal	: KWD_LITERAL EOL
-		{ literal_state = 1; }
-		literal
-
-	| tline
+	
+literal_line
+	: tline	
 		{ sdl_literal(&sdlliteral, $1); }
-		literal
+	;	
 
-	| KWD_END_LITERAL EOL
-		{ sdl_def_literal(sdlctx, &sdlliteral); 
-		  literal_state = 0; }
+literal	
+	: KWD_LITERAL EOL
+		{ literal_state = 1; }
+	;
+
+end_literal		
+	: KWD_END_LITERAL
+		{ sdl_def_literal(sdlctx, &sdlliteral); literal_state = 0; }
 	;
 	
-
+		  
 module	: KWD_MODULE id KWD_IDENT quoted_string EOL
 		{ sdl_module (&sdlctx, $2, $4); }
 	;

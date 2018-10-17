@@ -112,12 +112,13 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 92 "sdl_parser.y" /* yacc.c:1909  */
+#line 97 "sdl_parser.y" /* yacc.c:1909  */
 
-	int	bval;
+	int	bval;		/* SIGNED LONGWORD - 32 bits	*/
+	long long qval;		/* SIGNED QUADWORD - 64 bits	*/
 	char	tval[8192];
 
-#line 121 "sdl_parser.h" /* yacc.c:1909  */
+#line 122 "sdl_parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

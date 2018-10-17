@@ -1,0 +1,104 @@
+MODULE TFTPDEF IDENT "TFTPDEF-1-X";
+/*++
+/*Facility:
+/*   TFTP Server Client
+/* 
+/* Abstract:
+/*   An interface module defined TFTP primitives, constants, this story is based on
+/*	RFC1350 (THE TFTP PROTOCOL (REVISION 2))
+/*	ftp://ftp.rfc-editor.org/in-notes/rfc1350.txt
+/* 
+/* Author:
+/*   Ruslan R. Laishev
+/* 
+/* Creation Date: 24-MAY-2004
+/* 
+/* Modification History:
+/*--
+
+/*
+/**++
+/**
+/**	TFTP modes of transfer
+/**
+/**--
+/*
+
+CONSTANT	(
+		NETASCII,		/* This is
+				/* ascii as defined in "USA Standard Code for Information Interchange"
+				/* [1] with the modifications specified in "Telnet Protocol
+				/* Specification" [3].)  Note that it is 8 bit ascii.
+		OCTET		/* octet (This replaces the "binary" mode
+				/* of previous versions of this document.) raw 8 bit bytes;
+		)
+  	EQUALS 1 INCREMENT 1 PREFIX TFTP__$;
+
+
+CONSTANT	PORT	EQUALS 69 PREFIX TFTP__$;
+
+/*
+/**++
+/**
+/**	TFTP primitives
+/**
+/*
+/*   Type   Op #     Format without header
+/*
+/*          2 bytes    string   1 byte     string   1 byte
+/*          -----------------------------------------------
+/*   RRQ/  | 01/02 |  Filename  |   0  |    Mode    |   0  |
+/*   WRQ    -----------------------------------------------
+/*          2 bytes    2 bytes       n bytes
+/*          ---------------------------------
+/*   DATA  | 03    |   Block #  |    Data    |
+/*          ---------------------------------
+/*          2 bytes    2 bytes
+/*          -------------------
+/*   ACK   | 04    |   Block #  |
+/*          --------------------
+/*          2 bytes  2 bytes        string    1 byte
+/*          ----------------------------------------
+/*   ERROR | 05    |  ErrorCode |   ErrMsg   |   0  |
+/*          ----------------------------------------
+/**--
+
+CONSTANT	(
+		RRQ,		/* 1     Read request (RRQ)
+		WRQ,		/* 2     Write request (WRQ)
+		DATA,		/* 3     Data (DATA)
+		ACK,		/* 4     Acknowledgment (ACK)
+		ERROR		/* 5     Error (ERROR)
+		)
+  	EQUALS 1 INCREMENT 1 PREFIX TFTP_OPC$;
+
+
+
+AGGREGATE tftp_pdu STRUCTURE PREFIX tftp_pdu$;
+		opcode	WORD UNSIGNED;			/* field which indicates
+							/* the packet's type (e.g., DATA, ERROR, etc.)  These opcodes and  the
+							/* formats of  the various types of packets are discussed further in the
+							/* section on TFTP packets.
+
+		req	UNION;
+			xrq	STRUCTURE;
+			args	BYTE UNSIGNED DIMENSION 510;
+			END xrq;
+
+			data	STRUCTURE;
+			lbn	WORD UNSIGNED;
+			data	BYTE UNSIGNED DIMENSION 512;
+			END	data;
+
+			ack	STRUCTURE;
+			lbn     WORD UNSIGNED;
+			END	ack;
+
+			error	STRUCTURE;
+			code	WORD UNSIGNED;
+			msg	BYTE UNSIGNED DIMENSION 510;
+			END	error;
+   		END	req;
+END	tftp_pdu;
+			
+END_MODULE TFTPDEF;
