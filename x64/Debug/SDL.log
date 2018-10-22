@@ -1,8 +1,0 @@
-﻿  sdl_parser_rtns.c
-  sdl_parser.c
-  sdl_main.c
-  sdl_lexer.c
-  utility_routines.c
-  Generating Code...
-utility_routines.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
-  SDL.vcxproj -> D:\Works\SDL\x64\Debug\SDL.exe
