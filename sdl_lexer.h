@@ -21,6 +21,8 @@
 **				one symbol prefix: 
 **				added LITERAL END_LITERAL keywords to designate copy as-is section to output file;
 **
+**	17-OCT-2018	SYS	Resolved a problem with processing literal/end_literal.
+**
 **--
 */
 
@@ -42,7 +44,7 @@
 
 extern int literal_state;
 
-#line 46 "sdl_lexer.h"
+#line 48 "sdl_lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -346,7 +348,7 @@ void yyfree (void * ,yyscan_t yyscanner );
  * The user has a chance to override it with an option.
  */
 /* %if-c-only */
-#include <unistd.h>
+//#include <unistd.h>
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -514,9 +516,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 174 "sdl_lexer.l"
+#line 176 "sdl_lexer.l"
 
 
-#line 521 "sdl_lexer.h"
+#line 523 "sdl_lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

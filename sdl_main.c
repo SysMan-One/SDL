@@ -48,10 +48,12 @@
 
 #include	<stdio.h>
 #include	<errno.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+
 #ifndef WIN32
 #include	<unistd.h>
 #endif // !WIN32
-
 
 #include	"defsdl.h"
 
@@ -60,7 +62,6 @@
 
 #include	"sdl_parser.h"
 #include	"sdl_lexer.h"
-
 
 /*
 * Defines and includes for enable extend trace and logging
@@ -97,7 +98,7 @@ extern int yydebug;
  *		/TARGET=WIN64	- target C compiler is M$ C/C++
  */
 enum	{
-	SDL$K_TARGET_i386 = 1,
+	SDL$K_TARGET_i386 = 0,
 	SDL$K_TARGET_x86_64,
 	SDL$K_TARGET_WIN32,
 	SDL$K_TARGET_WIN64,
@@ -161,12 +162,16 @@ CLI_VERB	top_commands []  = {
 	{0}};
 
 
+extern	SDL_CTX	*	sdlctx;
+
+
 int	sdl_action	(CLI_CTX * clictx, void *arg)
 {
 int	status, v_lang = SDL$K_LANG_C, v_target = SDL$K_TARGET_x86_64, v_debug = 0;
 void *	scanner;
 ASC	p_infile = {0}, q_lang = {0}, q_target = {0};
 FILE *	finp;
+struct stat	sb;
 
 	/*
 	 * Retreive input arguments from the  has been parsed command line
@@ -195,8 +200,33 @@ FILE *	finp;
 
 	/* Open input .SDL file ... */
 	if ( !(finp = (fopen($ASCPTR(&p_infile), "r"))) )
-		return	$LOG(STS$K_FATAL, "Cannot open '%.*s', errno = %d", $ASCPTR(&p_infile), errno);
+		return	$LOG(STS$K_FATAL, "Cannot open '%.*s', errno=%d", $ASC(&p_infile), errno);
 
+	if ( stat($ASCPTR(&p_infile), &sb) )
+		$LOG(STS$K_ERROR, "Cannot stat('%.*s'), errno=%d", $ASC(&p_infile), errno);
+
+	/*
+	 * Initialize SDL Context, set predefined run-time SDL Variables
+	 */
+	status = sdl_initialize(&sdlctx);
+	sdl_var_set(sdlctx, "#SDL_LANGUAGE", $ASCPTR(&q_lang), SDL_K_VARTYPE_STR);
+	sdl_var_set(sdlctx, "#SDL_TARGET", $ASCPTR(&q_target), SDL_K_VARTYPE_STR);
+	sdl_var_set(sdlctx, "#SDL_SOURCE", $ASCPTR(&p_infile), SDL_K_VARTYPE_STR);
+	{
+	char	v_mtime[512];
+	struct tm _tm;
+
+#ifdef	WIN32
+	localtime_s(&_tm, &sb.st_mtim);
+#else
+	localtime_r(&sb.st_mtim, &_tm);
+#endif
+
+	sprintf (v_mtime, "%02u-%02u-%04u %02u:%02u:%02u", _tm.tm_mday, _tm.tm_mon + 1, 1900+_tm.tm_year,
+				_tm.tm_hour, _tm.tm_min, _tm.tm_sec);
+
+	sdl_var_set(sdlctx, "#SDL_SRCMODTM", v_mtime, SDL_K_VARTYPE_STR);
+	}
 
 	/* Start main work: processing source .SDL file ... */
 	yylex_init(&scanner);
@@ -242,7 +272,7 @@ void	*clictx = NULL;
 #if	0
 
 	if ( !(finp = (fopen(argv[1], "r"))) )
-		return	$LOG(STS$K_FATAL, "Cannot open '%s', errno = %d", argv[1], errno);
+		return	$LOG(STS$K_FATAL, "Cannot open '%s', errno=%d", argv[1], errno);
 
 	/* Start parsing ... */
 	yylex_init(&scanner);

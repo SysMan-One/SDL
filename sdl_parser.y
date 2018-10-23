@@ -18,13 +18,13 @@
 **		<id2>,
 **		<id3> = <value3>
 **		<id4>
-**	) EUQALS 1 <value> PREFIX <prefix> TAG <tag> INCREMENT <inc>
+**	) EUQALS  <value> PREFIX <prefix> TAG <tag> INCREMENT <inc>
 **		RADIX
 **	( will generate a set of definitions:
 **	#define <prefix>_$K_<tag>_<id>	<value>
 **	#define <prefix>_$K_<tag>_<id>	<value> + <inc>
 **	#define <prefix>_$K_<tag>_<id>	<value3>
-**	#define <prefix>_$K_<tag>_<id>	<value3>+<inc>
+**	#define <prefix>_$K_<tag>_<id>	<value3>+ <inc>
 **
 **	END_MODULE;
 **
@@ -44,6 +44,8 @@
 **				added LITERAL END_LITERAL keywords to designate a "copy as-is" section to output file;
 **
 **	17-OCT-2018	SYS	Resolved a problem with processing literal/end_literal.
+**
+**	23-OCT-2018	RRL	Resolved problem with the pointer to user defined type.
 **
 **--
 */
@@ -180,6 +182,7 @@ int	literal_state = 0;
 %type	<bval>	syntypes
 %type	<bval>	aggtypes
 %type	<bval>	signspec
+%type	<bval>	ptrspec
 %type	<bval>	align
 %type	<bval>	radix
 %type	<tval>	usertypes
@@ -213,25 +216,25 @@ varset	: sdlvar KWD_EQ quoted_string { sdl_var_set(sdlctx, $1, $3, SDL_K_VARTYPE
 	;
 
 
-	
-literal_line
-	: tline	
-		{ sdl_literal(&sdlliteral, $1); }
-	;	
 
-literal	
+literal_line
+	: tline
+		{ sdl_literal(&sdlliteral, $1); }
+	;
+
+literal
 	: KWD_LITERAL EOL
 		{ literal_state = 1; }
 	;
 
-end_literal		
+end_literal
 	: KWD_END_LITERAL
 		{ sdl_def_literal(sdlctx, &sdlliteral); literal_state = 0; }
 	;
-	
-		  
+
+
 module	: KWD_MODULE id KWD_IDENT quoted_string EOL
-		{ sdl_module (&sdlctx, $2, $4); }
+		{ sdl_module (sdlctx, $2, $4); }
 	;
 
 end_module
@@ -274,6 +277,12 @@ signspec
 	| KWD_UNSIGNED
 		{ $$ = SDL_K_TYPE_UNSG; }
 	;
+
+ptrspec
+	: KWD_PTR
+		{ $$ = SDL_K_TYPE_PTR; }
+	;
+
 
 /* Base types recognazing rule */
 basetypes
@@ -568,6 +577,9 @@ field_opts
 		{ sdlagg.item->dimension = (1 + ($1)); }
 		field_opts
 	| signspec
+		{ sdlagg.item->typespec |= $1; }
+		field_opts
+	| ptrspec
 		{ sdlagg.item->typespec |= $1; }
 		field_opts
 	| EOL

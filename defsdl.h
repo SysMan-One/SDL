@@ -13,9 +13,11 @@
 **
 **	02-FEB-2018	RRL	Added rem[ark] field to aggregate's stuff to carry comments.
 **
-**	05-FEB-2018	RRL	Added User defined field type, $BITOPT(22)
+**	05-FEB-2018	RRL	Added User defined field type, $BITOPT(22).
 **
-**	07-FEB-2018	RRL	Added literal section support
+**	07-FEB-2018	RRL	Added literal section support.
+**
+**	22-OCT-2018	RRL	32 bit vars -> 64 bits
 **
 **--
 */
@@ -89,7 +91,7 @@ typedef	struct	__sdl_var__
 
 	union	{			/* Variable value	*/
 		ASC	val_asc;
-		int	val_int;
+	long long	val_int;
 		};
 
 	struct __sdl_var__	*	link;	/* A link to next variable */
@@ -104,8 +106,8 @@ typedef	struct	__sdl_constant__
 		tag,
 		rem;		/* Remark string	*/
 
-	int	val,
-		mask,
+	long long	val;
+	int	mask,
 		radix;
 } SDL_CONSTANT;
 
@@ -117,8 +119,8 @@ typedef struct	__sdl_constitem__
 	ASC	id,		/* Item name		*/
 		rem;		/* Remark string	*/
 
-	int	val,		/* Constant value	*/
-		setf;		/* A reset value	*/
+	long long	val;	/* Constant value	*/
+	int	setf;		/* A reset value	*/
 
 } SDL_CONSTITEM;
 
@@ -133,8 +135,8 @@ typedef struct	__sdl_constlist__
 		tag,
 		rem;		/* Remark string	*/
 
-	int	val,
-		mask,
+	long long	val;
+	int	mask,
 		radix,
 		inc;
 } SDL_CONSTLIST;

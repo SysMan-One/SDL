@@ -17,6 +17,8 @@
 **				one symbol prefix: 
 **				added LITERAL END_LITERAL keywords to designate copy as-is section to output file;
 **
+**	17-OCT-2018	SYS	Resolved a problem with processing literal/end_literal.
+**
 **--
 */
 
@@ -38,7 +40,7 @@
 
 extern int literal_state;
 
-#line 42 "sdl_lexer.c"
+#line 44 "sdl_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -843,13 +845,13 @@ static yyconst flex_int32_t yy_rule_can_match_eol[63] =
 
 static yyconst flex_int16_t yy_rule_linenum[62] =
     {   0,
-       84,   85,   86,   87,   89,   91,   92,  106,  107,  108,
-      109,  110,  111,  112,  113,  115,  116,  117,  118,  119,
-      121,  122,  123,  124,  125,  127,  128,  129,  131,  132,
-      133,  134,  135,  136,  137,  139,  140,  141,  142,  143,
-      145,  146,  147,  148,  149,  150,  152,  153,  154,  155,
-      156,  157,  161,  162,  163,  164,  166,  167,  168,  169,
-      171
+       86,   87,   88,   89,   91,   93,   94,  108,  109,  110,
+      111,  112,  113,  114,  115,  117,  118,  119,  120,  121,
+      123,  124,  125,  126,  127,  129,  130,  131,  133,  134,
+      135,  136,  137,  138,  139,  141,  142,  143,  144,  145,
+      147,  148,  149,  150,  151,  152,  154,  155,  156,  157,
+      158,  159,  163,  164,  165,  166,  168,  169,  170,  171,
+      173
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -865,7 +867,7 @@ static yyconst flex_int16_t yy_rule_linenum[62] =
 /* text_string	(^["end_literal"])(.*)[\n] */
 
 
-#line 869 "sdl_lexer.c"
+#line 871 "sdl_lexer.c"
 
 #define INITIAL 0
 #define MODULE 1
@@ -1230,14 +1232,14 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 78 "sdl_lexer.l"
+#line 80 "sdl_lexer.l"
 
 
 	if ( literal_state )
 		BEGIN(LITERAL);
 
 
-#line 1241 "sdl_lexer.c"
+#line 1243 "sdl_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1331,38 +1333,38 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 84 "sdl_lexer.l"
+#line 86 "sdl_lexer.l"
 { return KWD_MODULE; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 85 "sdl_lexer.l"
+#line 87 "sdl_lexer.l"
 { return KWD_IDENT; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 86 "sdl_lexer.l"
+#line 88 "sdl_lexer.l"
 { return KWD_END_MODULE; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 87 "sdl_lexer.l"
+#line 89 "sdl_lexer.l"
 { return KWD_INCLUDE; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 89 "sdl_lexer.l"
+#line 91 "sdl_lexer.l"
 { return KWD_LITERAL; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 91 "sdl_lexer.l"
+#line 93 "sdl_lexer.l"
 { literal_state = 0; return KWD_END_LITERAL; }
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 92 "sdl_lexer.l"
+#line 94 "sdl_lexer.l"
 { 
 			if ( !strncasecmp(yytext, "end_literal",  11) )
 				{
@@ -1378,282 +1380,282 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 106 "sdl_lexer.l"
+#line 108 "sdl_lexer.l"
 { return	KWD_BYTE; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 107 "sdl_lexer.l"
+#line 109 "sdl_lexer.l"
 { return	KWD_WORD; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 108 "sdl_lexer.l"
+#line 110 "sdl_lexer.l"
 { return	KWD_LONG; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 109 "sdl_lexer.l"
+#line 111 "sdl_lexer.l"
 { return	KWD_QUAD; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 110 "sdl_lexer.l"
+#line 112 "sdl_lexer.l"
 { return	KWD_OCTA; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 111 "sdl_lexer.l"
+#line 113 "sdl_lexer.l"
 { return	KWD_BFLD; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 112 "sdl_lexer.l"
+#line 114 "sdl_lexer.l"
 { return	KWD_FLOAT; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 113 "sdl_lexer.l"
+#line 115 "sdl_lexer.l"
 { return	KWD_DOUBLE; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 115 "sdl_lexer.l"
+#line 117 "sdl_lexer.l"
 { return	KWD_SIGNED; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 116 "sdl_lexer.l"
+#line 118 "sdl_lexer.l"
 { return	KWD_UNSIGNED; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 117 "sdl_lexer.l"
+#line 119 "sdl_lexer.l"
 { return	KWD_DIMENSION; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 118 "sdl_lexer.l"
+#line 120 "sdl_lexer.l"
 { return	KWD_LENGTH; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 119 "sdl_lexer.l"
+#line 121 "sdl_lexer.l"
 { return	KWD_PTR; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 121 "sdl_lexer.l"
+#line 123 "sdl_lexer.l"
 { return	KWD_AGGREGATE; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 122 "sdl_lexer.l"
+#line 124 "sdl_lexer.l"
 { return	KWD_STRUCT; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 123 "sdl_lexer.l"
+#line 125 "sdl_lexer.l"
 { return	KWD_STRUCT; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 124 "sdl_lexer.l"
+#line 126 "sdl_lexer.l"
 { return	KWD_UNION; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 125 "sdl_lexer.l"
+#line 127 "sdl_lexer.l"
 { return	KWD_END; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 127 "sdl_lexer.l"
+#line 129 "sdl_lexer.l"
 { return	KWD_NOALIGN; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 128 "sdl_lexer.l"
+#line 130 "sdl_lexer.l"
 { return	KWD_ALIGN; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 129 "sdl_lexer.l"
+#line 131 "sdl_lexer.l"
 { return	KWD_PAGE; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 131 "sdl_lexer.l"
+#line 133 "sdl_lexer.l"
 { return	KWD_ASCIC; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 132 "sdl_lexer.l"
+#line 134 "sdl_lexer.l"
 { return	KWD_DESC; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 133 "sdl_lexer.l"
+#line 135 "sdl_lexer.l"
 { return	KWD_HWADDR; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 134 "sdl_lexer.l"
+#line 136 "sdl_lexer.l"
 { return	KWD_IPADDR; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 135 "sdl_lexer.l"
+#line 137 "sdl_lexer.l"
 { return	KWD_IP4ADDR; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 136 "sdl_lexer.l"
+#line 138 "sdl_lexer.l"
 { return	KWD_IP6ADDR; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 137 "sdl_lexer.l"
+#line 139 "sdl_lexer.l"
 { return	KWD_SOCKET; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 139 "sdl_lexer.l"
+#line 141 "sdl_lexer.l"
 { return	KWD_CONST; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 140 "sdl_lexer.l"
+#line 142 "sdl_lexer.l"
 { return	KWD_EQ; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 141 "sdl_lexer.l"
+#line 143 "sdl_lexer.l"
 { return	KWD_EQ; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 142 "sdl_lexer.l"
+#line 144 "sdl_lexer.l"
 { return	KWD_TAG; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 143 "sdl_lexer.l"
+#line 145 "sdl_lexer.l"
 { return	KWD_PREFIX; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 145 "sdl_lexer.l"
+#line 147 "sdl_lexer.l"
 { return	KWD_INC; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 146 "sdl_lexer.l"
+#line 148 "sdl_lexer.l"
 { return	KWD_RADIX; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 147 "sdl_lexer.l"
+#line 149 "sdl_lexer.l"
 { return	KWD_DEC; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 148 "sdl_lexer.l"
+#line 150 "sdl_lexer.l"
 { return	KWD_HEX; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 149 "sdl_lexer.l"
+#line 151 "sdl_lexer.l"
 { return	KWD_OCT; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 150 "sdl_lexer.l"
+#line 152 "sdl_lexer.l"
 { return	KWD_BIN; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 152 "sdl_lexer.l"
+#line 154 "sdl_lexer.l"
 { yylval->bval = atoi(yytext); return decimal; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 153 "sdl_lexer.l"
+#line 155 "sdl_lexer.l"
 { strcpy(yylval->tval, yytext); return hexadecimal; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 154 "sdl_lexer.l"
+#line 156 "sdl_lexer.l"
 { strcpy(yylval->tval, yytext); return octal; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 155 "sdl_lexer.l"
+#line 157 "sdl_lexer.l"
 { yylval->bval = atoi(yytext); return decimal; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 156 "sdl_lexer.l"
+#line 158 "sdl_lexer.l"
 { strcpy(yylval->tval, yytext); return hexadecimal; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 157 "sdl_lexer.l"
+#line 159 "sdl_lexer.l"
 { strcpy(yylval->tval, yytext); return octal; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 161 "sdl_lexer.l"
+#line 163 "sdl_lexer.l"
 { return	EOL; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 162 "sdl_lexer.l"
+#line 164 "sdl_lexer.l"
 { return	OPEN_LIST;}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 163 "sdl_lexer.l"
+#line 165 "sdl_lexer.l"
 { return	CLOSE_LIST;}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 164 "sdl_lexer.l"
+#line 166 "sdl_lexer.l"
 { return	COMMA; }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 166 "sdl_lexer.l"
+#line 168 "sdl_lexer.l"
 { strncpy (yylval->tval, yytext, sizeof(yylval->tval)); return comment; }
 	YY_BREAK
 case 58:
 /* rule 58 can match eol */
 YY_RULE_SETUP
-#line 167 "sdl_lexer.l"
+#line 169 "sdl_lexer.l"
 { strncpy (yylval->tval, yytext, sizeof(yylval->tval)); return quoted_string; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 168 "sdl_lexer.l"
+#line 170 "sdl_lexer.l"
 { strncpy (yylval->tval, yytext, sizeof(yylval->tval)); return id; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 169 "sdl_lexer.l"
+#line 171 "sdl_lexer.l"
 { strncpy (yylval->tval, yytext, sizeof(yylval->tval)); return sdlvar; }
 	YY_BREAK
 case 61:
 /* rule 61 can match eol */
 YY_RULE_SETUP
-#line 171 "sdl_lexer.l"
+#line 173 "sdl_lexer.l"
 {/* eat white spaces ... */}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 174 "sdl_lexer.l"
+#line 176 "sdl_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1657 "sdl_lexer.c"
+#line 1659 "sdl_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(MODULE):
 case YY_STATE_EOF(LITERAL):
@@ -3060,7 +3062,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* %ok-for-header */
 
-#line 174 "sdl_lexer.l"
+#line 176 "sdl_lexer.l"
 
 
 

@@ -1,5 +1,5 @@
 #define	__MODULE__	"SDL_ACTRTN"
-#define	__IDENT__	"X.50-04"
+#define	__IDENT__	"X.50-05"
 
 /*
 **++
@@ -20,6 +20,13 @@
 **
 **	12-OCT-2018	RRL	Replace sscanf() with strtoull()
 **
+**	18-OCT-2018	SYS	Added predefined run-time SDL' Variables:
+**				#SDL_LANGUAGE	- a target language, see /LANGUAGE
+**				#SDL_ARCH		- Architecture name , see /ARCH
+**				#SDL_SOURCE		- an SDL' source file name
+**				#SDL_SRCMODTM		- an SDL' modification date&time
+**
+**	23-OCT-2018	RRL	Fixed a bug with definition pointer to user defined type.
 **--
 */
 
@@ -220,7 +227,7 @@ ASC *	a;
 
 
 /**
- * @brief sdl_qstr2asc - Copying quoted ASCIZ string (with conversion to uper case)
+ * @brief sdl_qstr2asc - Copying quoted ASCIZ string (with conversion to upper case)
  *	 to ASCIC container.
  *
  * @param src - A source quoted ASCIZ string
@@ -315,6 +322,8 @@ unsigned char *	cp;
 	      *(cp) = (unsigned char) tolower(*cp);
 }
 
+
+
 int	sdl_end_module	(
 	SDL_CTX *	sdlctx
 			)
@@ -344,41 +353,39 @@ int	len, status;
 }
 
 int	sdl_module	(
-	SDL_CTX **	sdlctx,
+	SDL_CTX *	sdlctx,
 		char *	modname,
 		char *	ident
 			)
 {
-char	buf[8192];
+char	buf[8192], v_target[ASC$K_SZ], v_lang[ASC$K_SZ], v_src[ASC$K_SZ],  v_mtime[ASC$K_SZ];
 int	len, status;
-SDL_CTX * ctx;
 struct	tm	_tm = {0};
 
 	$TRACE("Module: %s, IDENT: %s", modname, ident);
 
-	if ( !(ctx = calloc(1, sizeof(SDL_CTX))))
-		return	$LOG(STS$K_FATAL, "Insufficient memory, errno=%d", errno);
+	sdl_var_get(sdlctx, "#SDL_LANGUAGE", v_lang, SDL_K_VARTYPE_STR);
+	sdl_var_get(sdlctx, "#SDL_TARGET", v_target, SDL_K_VARTYPE_STR);
+	sdl_var_get(sdlctx, "#SDL_SOURCE", v_src, SDL_K_VARTYPE_STR);
+	sdl_var_get(sdlctx, "#SDL_SRCMODTM", &v_mtime, SDL_K_VARTYPE_STR);
 
-	ctx->fd = -1;
-	$ASCLEN( &ctx->ext) = len = 1;
-	memcpy( $ASCPTR( &ctx->ext), "h", len);
+	sdl_str2asc("h", &sdlctx->ext);
 
 	/* Generate a filename (<module_name> + <ext>) */
-	len = sprintf(buf, "%s.%.*s", modname, $ASC(&ctx->ext));
+	len = sprintf(buf, "%s.%.*s", modname, $ASC(&sdlctx->ext));
 
-	if ( 0 < ctx->fd )
+	if ( 0 < sdlctx->fd )
 		{
-		$LOG(STS$K_FATAL, "MODULE %.*s has not been closed by END_MODULE directive", $ASC( &ctx->module) );
+		$LOG(STS$K_FATAL, "MODULE %.*s has not been closed by END_MODULE directive", $ASC( &sdlctx->module) );
 		return	$LOG(STS$K_FATAL, "Cannot start processing of MODULE %s (IDENT %s)", modname, ident);
 		}
 
 	/* Open a file to store generated definitions */
-	if ( 0 > (ctx->fd = open(buf, O_WRONLY | O_TRUNC | O_CREAT)) )
+	if ( 0 > (sdlctx->fd = open(buf, O_WRONLY | O_TRUNC | O_CREAT)) )
 		return	$LOG(STS$K_FATAL, "Cannot create output %s, errno=%d", buf, errno);
 
 	/* Save module name */
-	$ASCLEN( &ctx->module) = (unsigned char) strnlen( modname, ASC$K_SZ );
-	memcpy( $ASCPTR( &ctx->module), modname, $ASCLEN( &ctx->module) );
+	sdl_str2asc(modname, &sdlctx->module);
 
 	/* Generate and write to file a module's header, and .H preamble */
 	len = sprintf (buf,
@@ -399,6 +406,13 @@ struct	tm	_tm = {0};
 	len += sprintf (buf + len,
 		"**  PRODUCED BY:  StarLet SDL " __IDENT__ CRLF);
 
+	len += sprintf (buf + len,
+		"**" CRLF "**  LANGUAGE:  %s " CRLF, v_lang);
+	len += sprintf (buf + len,
+		"**  TARGET:  %s " CRLF, v_target);
+	len += sprintf (buf + len,
+		"**  SOURCE:  %s (%s)" CRLF,
+			v_src, v_mtime);
 
 	len += sprintf (buf + len,
 		"**--" CRLF \
@@ -415,10 +429,8 @@ struct	tm	_tm = {0};
 		"	extern \"C\" {" CRLF \
 		"#endif" CRLF CRLF CRLF, modname,  modname);
 
-	if ( len != (status = write(ctx->fd, buf, len)) )
+	if ( len != (status = write(sdlctx->fd, buf, len)) )
 		return	$LOG(STS$K_FATAL, "write(%d octets)->%d, errno=%d", len, status, errno);
-
-	*sdlctx = ctx;
 
 	return	STS$K_SUCCESS;
 }
@@ -532,8 +544,7 @@ int	sdl_constant	(
 {
 	memset(ctx, 0, sizeof(SDL_CONSTANT) );
 
-	$ASCLEN(&ctx->id) = (unsigned char) strnlen(id, ASC$K_SZ);
-	memcpy($ASCPTR(&ctx->id), id, $ASCLEN(&ctx->id) );
+	sdl_str2asc(id, &ctx->id);
 
 	ctx->val = val;
 
@@ -550,7 +561,7 @@ char	buf[8192], *src, *dst;
 int	len, status;
 
 	/* Generate and write to file footer part of definitions */
-	len = sprintf(buf, "#define	%.*s$K_%.*s$%.*s	%d" CRLF,
+	len = sprintf(buf, "#define	%.*sK_%.*s%.*s	%lld" CRLF,
 		      $ASC(&ctx->pref), $ASC(&ctx->tag), $ASC(&ctx->id), ctx->val );
 
 	for ( status = 0, src = dst = buf; len > 0; len--, src++)
@@ -581,8 +592,7 @@ SDL_CONSTITEM *ci;
 	if ( !(ci = calloc(1, sizeof(SDL_CONSTITEM))) )
 		return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno=%d", sizeof(SDL_CONSTITEM), errno);
 
-	$ASCLEN(&ci->id) = (unsigned char) strnlen(id, ASC$K_SZ);
-	memcpy($ASCPTR(&ci->id), id, $ASCLEN(&ci->id) );
+	sdl_str2asc(id, &ci->id);
 
 	ci->val = val;
 	ci->setf= setf;
@@ -615,7 +625,7 @@ struct iovec iov [] = { {buf, 0}, {CRLF, 2} };
 		val = ci->setf ? ci->val : val;
 
 		/* Generate constant name ... */
-		len = sprintf(buf, "#define	%.*s$K_%.*s$%.*s\t",
+		len = sprintf(buf, "#define	%.*sK_%.*s%.*s\t",
 			      $ASC(&li->pref), $ASC(&li->tag), $ASC(&ci->id));
 
 		for ( status = 0, src = dst = buf; len > 0; len--, src++)
@@ -799,16 +809,17 @@ ASC	stack_tag[32];
 			iov[0].iov_len = (1 + deeplvl) * 4;
 
 			/* Add type specification */
-			if ( itm->typespec == SDL_K_TYPE_USER )
+			if ( itm->typespec & SDL_K_TYPE_USER )
 				len = sprintf(buf, "%.*s\t", $ASC(&itm->utype) );
 			else	len = sprintf(buf, "%s\t", type2ctype (itm->typespec, ctype) );
 
-
-			if ( itm->typespec == SDL_K_TYPE_USER )
-				len += sprintf(buf + len, "%.*s%.*s",
-				      $ASC(&stack_tag[deeplvl]), $ASC(&itm->id));
-			else	len += sprintf(buf + len, "%.*s%s_%.*s",
-					$ASC(&stack_tag[deeplvl]), type2pref (itm->typespec), $ASC(&itm->id));
+			if ( itm->typespec & SDL_K_TYPE_USER )
+				{
+				if ( itm->typespec & SDL_K_TYPE_PTR )
+					len += sprintf(buf + len, "*%.*sa_%.*s", $ASC(&stack_tag[deeplvl]), $ASC(&itm->id));
+				else	len += sprintf(buf + len, "%.*s%.*s", $ASC(&stack_tag[deeplvl]), $ASC(&itm->id));
+				}
+			else	len += sprintf(buf + len, "%.*s%s_%.*s", $ASC(&stack_tag[deeplvl]), type2pref (itm->typespec), $ASC(&itm->id));
 
 
 			if ( itm->typespec & SDL_K_TYPE_BFLD )
@@ -817,11 +828,9 @@ ASC	stack_tag[32];
 				len += sprintf(buf + len, "[%d];", itm->dimension - 1);
 			else	len += sprintf(buf + len, ";");
 
-
 			/* Is there a comment line ? */
 			if ( $ASCLEN(&itm->rem) )
 				len += sprintf(buf + len, "%.*s", $ASC(&itm->rem) );
-
 
 			iov[1].iov_len = len;
 
@@ -914,8 +923,7 @@ SDL_VAR	*var = sdlctx->vars;
 			return	$LOG(STS$K_FATAL, "Insufficient memory to allocate %d octets, errno=%d", sizeof(SDL_VAR), errno);
 
 		/* Preset Id and Type */
-		$ASCLEN(&var->id) = len;
-		memcpy($ASCPTR(&var->id), name, len);
+		sdl_str2asc(name, &var->id);
 
 		var->type = type;
 
@@ -1059,6 +1067,24 @@ struct iovec iov [] = { {0, 0}, {CRLF, 2} };
 
 		free(li);
 		}
+
+	return	STS$K_SUCCESS;
+}
+
+
+
+
+
+
+int	sdl_initialize	(
+	SDL_CTX **	sdlctx
+			)
+{
+	if ( !(*sdlctx = calloc(1, sizeof(SDL_CTX))))
+		return	$LOG(STS$K_FATAL, "Insufficient memory, errno=%d", errno);
+
+
+	(*sdlctx)->fd = -1;
 
 	return	STS$K_SUCCESS;
 }
